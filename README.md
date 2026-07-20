@@ -1,1 +1,3 @@
 # PAK-college-website
+
+<img width="1919" height="1040" alt="изображение" src="https://github.com/user-attachments/assets/345bf596-f2b6-4294-b51e-5f8fcc5937ae" />
