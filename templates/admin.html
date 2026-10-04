@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Админ-панель</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <header class="admin-header">
+        <div class="header-left">
+            <div class="title-group">
+                <h1><i style="margin-right:8px;color:#7aa9ff;"></i>Админ-панель</h1>
+                <p>Управление администраторами · Статистика</p>
+            </div>
+            <a href="/" class="btn-header btn-home-header"><i class="bi bi-house"></i> На главную</a>
+        </div>
+        <div class="header-right">
+            <div class="user-block">
+                <i class="bi bi-person-circle"></i>
+                <span>{{ username }}</span>
+                <span class="level-badge">Уровень {{ user_level }}</span>
+            </div>
+            <a href="/logout" class="btn-header btn-logout-header"><i class="bi bi-box-arrow-right"></i> Выйти</a>
+        </div>
+    </header>
+
+    <div class="main-wrapper">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-title">
+                <i class="bi bi-people-fill"></i> Администраторы
+                <span class="badge-count" id="admins-count">0</span>
+            </div>
+            <div class="admin-list-wrap">
+                <ul class="admin-list" id="admin-list"></ul>
+            </div>
+        </aside>
+
+        <div class="content-area">
+            <div class="stats-section">
+                <h2><i class="bi bi-graph-up-arrow"></i> Статистика сайта</h2>
+
+                <div class="cards">
+                    <div class="card-stat"><div class="num">{{ stats.visits|length }}</div><div class="label">Всего визитов</div><div class="icon-bg"><i class="bi bi-eye"></i></div></div>
+                    <div class="card-stat"><div class="num">{{ unique_ips }}</div><div class="label">Уникальных посетителей</div><div class="icon-bg"><i class="bi bi-people"></i></div></div>
+                    <div class="card-stat"><div class="num">{{ stats.page_views|length }}</div><div class="label">Уникальных страниц</div><div class="icon-bg"><i class="bi bi-files"></i></div></div>
+                    <div class="card-stat"><div class="num">{{ stats.browsers|length }}</div><div class="label">Типов браузеров</div><div class="icon-bg"><i class="bi bi-browser-chrome"></i></div></div>
+                </div>
+
+                <div class="charts-row">
+                    <div class="chart-box">
+                        <div class="chart-title"><i class="bi bi-bar-chart-fill"></i> Браузеры</div>
+                        <canvas id="browserChart" height="130"></canvas>
+                    </div>
+                    <div class="chart-box">
+                        <div class="chart-title"><i class="bi bi-file-earmark-text"></i> Страницы</div>
+                        <canvas id="pagesChart" height="130"></canvas>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div>
+                        <div class="section-title"><i class="bi bi-browser-chrome"></i> Браузеры</div>
+                        <div class="stats-table-wrap">
+                            <table>
+                                {% for browser, count in stats.browsers.items()|sort(attribute='1', reverse=true) %}
+                                <tr><td>{{ browser }}</td><td><span class="badge-stat">{{ count }}</span></td></tr>
+                                {% endfor %}
+                            </table>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="section-title"><i class="bi bi-files"></i> Страницы</div>
+                        <div class="stats-table-wrap">
+                            <table>
+                                {% for page, count in stats.page_views.items()|sort(attribute='1', reverse=true) %}
+                                <tr><td>{{ page }}</td><td><span class="badge-stat">{{ count }}</span></td></tr>
+                                {% endfor %}
+                            </table>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="section-title"><i class="bi bi-display"></i> Экраны</div>
+                        <div class="stats-table-wrap">
+                            {% set screens_list = stats.screens.items()|sort(attribute='1', reverse=true)|list %}
+                            <table class="table-collapsible" id="screens-table">
+                                <tbody>
+                                    {% for screen, count in screens_list[:10] %}
+                                    <tr><td>{{ screen }}</td><td><span class="badge-stat badge-soft">{{ count }}</span></td></tr>
+                                    {% endfor %}
+                                    {% if screens_list|length > 10 %}
+                                    <tbody class="extra-rows">
+                                        {% for screen, count in screens_list[10:] %}
+                                        <tr><td>{{ screen }}</td><td><span class="badge-stat badge-soft">{{ count }}</span></td></tr>
+                                        {% endfor %}
+                                    </tbody>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                            {% if screens_list|length > 10 %}
+                            <button class="toggle-table-btn" data-target="screens-table">
+                                <i class="bi bi-chevron-down"></i> Показать все ({{ screens_list|length }})
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="section-title"><i class="bi bi-link-45deg"></i> Откуда пришли</div>
+                        <div class="stats-table-wrap">
+                            {% set referers_list = stats.referers.items()|sort(attribute='1', reverse=true)|list %}
+                            <table class="table-collapsible" id="referers-table">
+                                <tbody>
+                                    {% for ref, count in referers_list[:10] %}
+                                    <tr><td style="font-size:11px; word-break:break-all;">{{ ref }}</td><td><span class="badge-stat">{{ count }}</span></td></tr>
+                                    {% endfor %}
+                                    {% if referers_list|length > 10 %}
+                                    <tbody class="extra-rows">
+                                        {% for ref, count in referers_list[10:] %}
+                                        <tr><td style="font-size:11px; word-break:break-all;">{{ ref }}</td><td><span class="badge-stat">{{ count }}</span></td></tr>
+                                        {% endfor %}
+                                    </tbody>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                            {% if referers_list|length > 10 %}
+                            <button class="toggle-table-btn" data-target="referers-table">
+                                <i class="bi bi-chevron-down"></i> Показать все ({{ referers_list|length }})
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top:20px;">
+                    <div class="section-title"><i class="bi bi-clock-history"></i> Все визиты ({{ visits|length }})</div>
+                    <div class="stats-table-wrap">
+                        {% set visits_list = visits[:100]|list %}
+                        <table class="table-collapsible" id="visits-table">
+                            <thead><tr><th>Время</th><th>IP</th><th>Браузер</th><th>Страница</th><th>Откуда</th></tr></thead>
+                            <tbody>
+                                {% for visit in visits_list[:10] %}
+                                <tr>
+                                    <td style="white-space:nowrap; font-size:11px;">{{ visit.timestamp }}</td>
+                                    <td style="font-size:11px;">{{ visit.ip }}</td>
+                                    <td><span class="badge-stat badge-soft">{{ visit.browser }}</span></td>
+                                    <td style="font-size:11px;">{{ visit.page }}</td>
+                                    <td style="font-size:10px; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ visit.referer }}">{{ visit.referer }}</td>
+                                </tr>
+                                {% endfor %}
+                                {% if visits_list|length > 10 %}
+                                <tbody class="extra-rows">
+                                    {% for visit in visits_list[10:] %}
+                                    <tr>
+                                        <td style="white-space:nowrap; font-size:11px;">{{ visit.timestamp }}</td>
+                                        <td style="font-size:11px;">{{ visit.ip }}</td>
+                                        <td><span class="badge-stat badge-soft">{{ visit.browser }}</span></td>
+                                        <td style="font-size:11px;">{{ visit.page }}</td>
+                                        <td style="font-size:10px; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ visit.referer }}">{{ visit.referer }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                        {% if visits_list|length > 10 %}
+                        <button class="toggle-table-btn" data-target="visits-table">
+                            <i class="bi bi-chevron-down"></i> Показать все ({{ visits_list|length }})
+                        </button>
+                        {% endif %}
+                        {% if visits|length > 100 %}
+                        <p style="color:#6f85a5; margin-top:8px; font-size:11px;">Показано 100 из {{ visits|length }} визитов</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div style="margin-top:20px;">
+                    <div class="section-title"><i class="bi bi-graph-up"></i> Поведение пользователей</div>
+                    {% if stats.clients %}
+                    {% set clients_list = stats.clients[-50:]|reverse|list %}
+                    <div class="stats-table-wrap">
+                        <table class="table-collapsible" id="behavior-table">
+                            <thead><tr><th>Время</th><th>Страница</th><th>Экран</th><th>Загрузка</th><th>Время на стр.</th><th>Клики</th><th>Скролл</th></tr></thead>
+                            <tbody>
+                                {% for client in clients_list[:10] %}
+                                <tr>
+                                    <td style="white-space:nowrap; font-size:11px;">{{ client.timestamp }}</td>
+                                    <td style="font-size:11px;">{{ client.page }}</td>
+                                    <td style="font-size:11px;">{{ client.screen }}</td>
+                                    <td style="font-size:11px;">{{ client.load_time }}ms</td>
+                                    <td style="font-size:11px;">{{ client.time_on_page }}с</td>
+                                    <td style="font-size:11px;">{{ client.clicks }}</td>
+                                    <td style="font-size:11px;">{{ client.scroll_depth }}%</td>
+                                </tr>
+                                {% endfor %}
+                                {% if clients_list|length > 10 %}
+                                <tbody class="extra-rows">
+                                    {% for client in clients_list[10:] %}
+                                    <tr>
+                                        <td style="white-space:nowrap; font-size:11px;">{{ client.timestamp }}</td>
+                                        <td style="font-size:11px;">{{ client.page }}</td>
+                                        <td style="font-size:11px;">{{ client.screen }}</td>
+                                        <td style="font-size:11px;">{{ client.load_time }}ms</td>
+                                        <td style="font-size:11px;">{{ client.time_on_page }}с</td>
+                                        <td style="font-size:11px;">{{ client.clicks }}</td>
+                                        <td style="font-size:11px;">{{ client.scroll_depth }}%</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                        {% if clients_list|length > 10 %}
+                        <button class="toggle-table-btn" data-target="behavior-table">
+                            <i class="bi bi-chevron-down"></i> Показать все ({{ clients_list|length }})
+                        </button>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <p style="color:#6f85a5; font-size:13px;">Нет данных. Посетите главную страницу.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="addModal">
+        <div class="modal-content">
+            <h4><i class="bi bi-person-plus"></i> Добавить администратора</h4>
+            <form id="add-admin-form">
+                <div class="mb-3"><label class="form-label">ФИО</label><input type="text" class="form-control" id="admin-fullname" placeholder="Иванов Иван Иванович" required /></div>
+                <div class="mb-3"><label class="form-label">Логин</label><input type="text" class="form-control" id="admin-username" placeholder="ivanov" required /></div>
+                <div class="mb-3"><label class="form-label">Пароль</label><input type="text" class="form-control" id="admin-password" placeholder="Минимум 6 символов" required minlength="6" /></div>
+                <div class="mb-3"><label class="form-label">Уровень доступа</label><select class="form-control" id="admin-level"></select><small class="text-muted">Только ниже вашего уровня</small></div>
+                <div class="d-flex gap-2 justify-content-end">
+                    <button type="button" class="btn-cancel" id="add-cancel-btn">Отмена</button>
+                    <button type="submit" class="btn-save" id="add-save-btn"><i class="bi bi-check-circle"></i> Добавить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="editModal">
+        <div class="modal-content">
+            <h4><i class="bi bi-pencil-square"></i> Редактировать</h4>
+            <form id="edit-admin-form">
+                <input type="hidden" id="edit-admin-id" />
+                <div class="mb-3"><label class="form-label">ФИО</label><input type="text" class="form-control" id="edit-fullname" required /></div>
+                <div class="mb-3"><label class="form-label">Логин</label><input type="text" class="form-control" id="edit-username" required /></div>
+                <div class="mb-3"><label class="form-label">Новый пароль <span class="text-muted">(оставьте пустым)</span></label><input type="text" class="form-control" id="edit-password" placeholder="Минимум 6 символов" minlength="6" /></div>
+                <div class="mb-3"><label class="form-label">Уровень доступа</label><select class="form-control" id="edit-level"></select><small class="text-muted" id="edit-level-hint"></small></div>
+                <div class="d-flex gap-2 justify-content-end">
+                    <button type="button" class="btn-cancel" id="edit-cancel-btn">Отмена</button>
+                    <button type="submit" class="btn-save" id="edit-save-btn"><i class="bi bi-check-circle"></i> Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="toast-container"></div>
+
+    <script>
+        const currentUserLevel = {{ user_level }};
+        const currentUsername = "{{ username }}";
+        const statsData = {
+            browsers: {{ stats.browsers|tojson }},
+            page_views: {{ stats.page_views|tojson }}
+        };
+    </script>
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+{% extends "base.html" %} {% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/staff.css') }}" />
+<div class="staff-page">
+    <div class="staff-layout">
+        <div class="side-menu">
+            <div class="menu-header">
+                {% if is_admin %}
+                <button class="add-menu-btn" id="addMenuBtn">+</button>
+                {% endif %}
+            </div>
+            <div id="menuContainer">
+            </div>
+        </div>
+
+        <div class="content-section">
+            <div class="content-header">
+                <h3 id="contentTitle">Информация для сотрудников</h3>
+            </div>
+            <div class="content-body" id="contentBody">
+                <div class="content-loading">Загрузка информации</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="menuModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Добавить пункт в меню</h3>
+            <div class="input-group">
+                <input
+                    type="text"
+                    id="menuLetter"
+                    class="input"
+                    placeholder=" "
+                    required
+                /><label class="user-label">Название</label>
+            </div>
+            <div class="input-group">
+                <textarea
+                    id="menuText"
+                    class="input"
+                    rows="15"
+                    placeholder=" "
+                ></textarea
+                ><label class="user-label"
+                    >HTML-текст (будет показан при клике)</label
+                >
+            </div>
+            <div class="input-group">
+                <input
+                    type="text"
+                    id="menuLink"
+                    class="input"
+                    placeholder=" "
+                /><label class="user-label"
+                    >Ссылка (необязательно, если заполнена - переход по ссылке
+                    вместо текста)</label
+                >
+            </div>
+            <button id="submitMenu">Добавить</button>
+        </div>
+    </div>
+
+    <div id="editMenuModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Редактировать пункт меню</h3>
+            <input type="hidden" id="editMenuId" value="" />
+            <div class="input-group">
+                <input
+                    type="text"
+                    id="editMenuLetter"
+                    class="input"
+                    placeholder=" "
+                    required
+                /><label class="user-label">Название</label>
+            </div>
+            <div class="input-group">
+                <textarea
+                    id="editMenuText"
+                    class="input"
+                    rows="15"
+                    placeholder=" "
+                ></textarea
+                ><label class="user-label">HTML-текст</label>
+            </div>
+            <div class="input-group">
+                <input
+                    type="text"
+                    id="editMenuLink"
+                    class="input"
+                    placeholder=" "
+                /><label class="user-label">Ссылка (необязательно)</label>
+            </div>
+            <button id="submitEditMenu">Сохранить</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script>
+        window.isAdmin = {{ is_admin|tojson }};
+    </script>
+    <script src="{{ url_for('static', filename='js/staff.js') }}"></script>
+</div>
+{% endblock %}

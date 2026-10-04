@@ -1,0 +1,40 @@
+{% extends "base.html" %} {% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cal.css') }}">
+<div class="cal-layout">
+    <div class="cal-sidebar">
+        <a href="/" class="back-btn">← Назад</a>
+        <div class="calendar-wrapper">
+            <h3>📅 Календарь</h3>
+            <div class="calendar-nav">
+                <button id="prevMonthBtn">‹</button>
+                <span class="month-label" id="monthLabel">Январь 2026</span>
+                <button id="nextMonthBtn">›</button>
+            </div>
+            <div class="calendar-grid" id="calendarGrid"></div>
+        </div>
+    </div>
+
+    <div class="news-section">
+        <div class="news-header">
+            <h3>📰 Новости</h3>
+            <span class="date-badge" id="dateBadge">Все новости</span>
+        </div>
+        <div class="news-list" id="newsList">
+            <div class="empty-news">Загрузка...</div>
+        </div>
+        <div class="news-more">
+            <a id="loadMoreNewsBtn">все новости →</a>
+        </div>
+    </div>
+</div>
+
+<div id="lightbox" class="lightbox">
+    <span class="lightbox-close">&times;</span>
+    <span class="lightbox-prev">&#10094;</span>
+    <span class="lightbox-next">&#10095;</span>
+    <div class="lightbox-content"></div>
+    <div class="zoom-indicator" style="display: none">100%</div>
+</div>
+
+<script src="{{ url_for('static', filename='js/cal.js') }}"></script>
+{% endblock %}

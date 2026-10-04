@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+<div class="homepage">
+
+    {% if is_admin %}
+    <a href="/calendar" class="admin-calendar-btn" title="Календарь">📅</a>
+    {% endif %}
+
+    <div class="home-layout">
+        <div class="side-menu">
+            <div class="menu-header">
+                {% if is_admin %}
+                <button class="add-menu-btn" id="addLeftMenuBtn">+</button>
+                {% endif %}
+            </div>
+            <div id="leftMenuContainer"></div>
+        </div>
+
+        <div class="news-section">
+            <div class="news-header">
+                <h3>Новости</h3>
+                {% if is_admin %}
+                <button class="add-btn" id="addNewsBtn">+ Добавить пост</button>
+                {% endif %}
+            </div>
+            <div class="news-list" id="newsList">
+                <div class="empty-news">Загрузка...</div>
+            </div>
+            <div class="news-more">
+                <a id="loadMoreNewsBtn">все новости →</a>
+            </div>
+        </div>
+
+        <div class="extra-info-section">
+            <div class="info-header">
+                {% if is_admin %}
+                <button class="add-info-header-btn" id="addPromoBtn">+</button>
+                {% endif %}
+            </div>
+            <div id="promoContainer">
+                {% if right_ads and right_ads|length > 0 %} {% for ad in right_ads %}
+                <div class="promo-block" data-promo-id="{{ ad.id }}">
+                    <div class="promo-content">
+                        {% if ad.media %}
+                        <div class="promo-media">
+                            {% if ad.media.endswith(('.mp4','.mov','.avi','.mkv')) %}
+                            <video controls src="{{ ad.media }}"></video>
+                            {% else %}
+                            <img src="{{ ad.media }}" alt="Изображение" />
+                            {% endif %}
+                        </div>
+                        {% if ad.content %}
+                        <div class="promo-text">{{ ad.content }}</div>
+                        {% endif %}
+                        {% elif ad.html_content %}
+                        <div class="promo-html-wrapper">
+                            {{ ad.html_content|safe }}
+                        </div>
+                        {% endif %}
+                        {% if ad.link %}
+                        <div class="promo-link">
+                            <a href="{{ ad.link }}" target="_blank" rel="noopener noreferrer">Подробнее →</a>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% if is_admin %}
+                    <button class="delete-promo-btn" data-id="{{ ad.id }}">✖</button>
+                    {% endif %}
+                </div>
+                {% endfor %} {% else %}
+                <div class="empty-info">Пусто</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile bottom buttons -->
+<div class="mobile-bottom-buttons">
+    <button class="mobile-bottom-btn left-btn" id="mobileLeftBtn">
+        По законодательству
+    </button>
+    <button class="mobile-bottom-btn right-btn" id="mobileRightBtn">
+        Инфо
+    </button>
+</div>
+
+<div id="panelOverlay" class="panel-overlay"></div>
+<div id="mobileLeftPanel" class="mobile-panel left">
+    <div class="panel-header">
+        <h3>По законодательству</h3>
+        <button class="close-panel-btn" data-panel="left">&times;</button>
+    </div>
+    <div id="mobileLeftMenuContainer"></div>
+</div>
+<div id="mobileRightPanel" class="mobile-panel right">
+    <div class="panel-header">
+        <h3>Полезная информация</h3>
+        <button class="close-panel-btn" data-panel="right">&times;</button>
+    </div>
+    <div id="mobileRightContent"></div>
+</div>
+
+<div id="lightbox" class="lightbox">
+    <span class="lightbox-close">&times;</span>
+    <span class="lightbox-prev">&#10094;</span>
+    <span class="lightbox-next">&#10095;</span>
+    <div class="lightbox-content"></div>
+</div>
+
+<div id="textViewModal" class="modal text-view-modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3 id="textViewTitle" class="text-view-title"></h3>
+        <div id="textViewContent" class="text-view-content"></div>
+    </div>
+</div>
+
+<div id="leftMenuModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3>Добавить пункт в левое меню</h3>
+        <div class="input-group">
+            <input type="text" id="menuLetter" class="input" placeholder=" " required />
+            <label class="user-label">Название</label>
+        </div>
+        <div class="input-group">
+            <textarea id="menuText" class="input" rows="15" placeholder=" "></textarea>
+            <label class="user-label">HTML-текст (будет показан при клике)</label>
+        </div>
+        <div class="input-group">
+            <input type="text" id="menuLink" class="input" placeholder=" " />
+            <label class="user-label">Ссылка (необязательно, если заполнена - переход по ссылке вместо текста)</label>
+        </div>
+        <button id="submitLeftMenu">Добавить</button>
+    </div>
+</div>
+
+<div id="editLeftMenuModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3>Редактировать пункт меню</h3>
+        <input type="hidden" id="editMenuId" value="" />
+        <div class="input-group">
+            <input type="text" id="editMenuLetter" class="input" placeholder=" " required />
+            <label class="user-label">Название</label>
+        </div>
+        <div class="input-group">
+            <textarea id="editMenuText" class="input" rows="15" placeholder=" "></textarea>
+            <label class="user-label">HTML-текст</label>
+        </div>
+        <div class="input-group">
+            <input type="text" id="editMenuLink" class="input" placeholder=" " />
+            <label class="user-label">Ссылка (необязательно)</label>
+        </div>
+        <button id="submitEditMenu">Сохранить</button>
+    </div>
+</div>
+
+<div id="newsModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3 id="newsModalTitle">Добавить новость</h3>
+        <input type="hidden" id="editNewsId" value="" />
+        <div class="input-group">
+            <input type="text" id="newsTitle" class="input" placeholder=" " required />
+            <label class="user-label">Заголовок</label>
+        </div>
+        <div class="input-group">
+            <textarea id="newsContent" class="input" rows="4" placeholder=" " required></textarea>
+            <label class="user-label">Содержание</label>
+        </div>
+        <div id="newsDragDropArea" class="drag-drop-area">
+            <div class="upload-icon">📎</div>
+            <div class="upload-text">Перетащите изображения или видео сюда</div>
+            <div class="upload-hint">
+                или нажмите для выбора (можно несколько файлов)
+            </div>
+        </div>
+        <input type="file" id="newsMediaFile" accept="image/*,video/*" multiple class="hidden-file-input" />
+        <div id="newsPreviewContainer" class="preview-grid"></div>
+
+        <div class="news-submit-row">
+            <div class="news-date-wrapper">
+                <label for="newsDate">Дата публикации</label>
+                <input type="date" id="newsDate" class="news-date-input" />
+            </div>
+            <button id="submitNews" class="submit-news-btn">
+                Добавить новость
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Промо модальное окно -->
+<div id="promoModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3>Добавить информационный блок</h3>
+
+        <div class="promo-type-selector">
+            <label>
+                <input type="radio" name="promoContentType" value="image" checked>
+                <span>🖼️ Изображение/Видео</span>
+            </label>
+            <label>
+                <input type="radio" name="promoContentType" value="html">
+                <span>📄 HTML-код</span>
+            </label>
+        </div>
+
+        <div id="promoImageSection">
+            <div id="promoDragDropArea" class="drag-drop-area">
+                <div class="upload-icon">🖼️</div>
+                <div class="upload-text">Перетащите изображение или видео сюда</div>
+                <div class="upload-hint">или нажмите для выбора (один файл)</div>
+            </div>
+            <input type="file" id="promoMediaFile" accept="image/*,video/*" class="hidden-file-input">
+            <div id="promoPreviewContainer" class="preview-grid"></div>
+        </div>
+
+        <div id="promoHtmlSection" style="display: none;">
+            <div class="input-group">
+                <textarea id="promoHtmlContent" class="input" rows="8" placeholder=" "></textarea>
+                <label class="user-label">HTML-код для вставки</label>
+            </div>
+            <div class="html-hint">
+                Вставьте HTML-код виджета (например, от Госуслуг)
+            </div>
+        </div>
+
+        <div class="input-group">
+            <input type="text" id="promoTitle" class="input" placeholder=" " />
+            <label class="user-label">Название/Текст (необязательно)</label>
+        </div>
+
+        <div class="input-group">
+            <input type="text" id="promoLink" class="input" placeholder=" " />
+            <label class="user-label">Ссылка (необязательно)</label>
+        </div>
+
+        <button id="submitPromo" style="background: #0b3b5f; color: white; border: none; padding: 10px 32px; border-radius: 30px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s;">Добавить</button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script>
+    window.isAdmin = {{ is_admin|tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/home.js') }}"></script>
+{% endblock %}
+{% include 'stats_script.html' %}

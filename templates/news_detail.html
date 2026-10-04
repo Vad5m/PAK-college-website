@@ -1,0 +1,40 @@
+{% extends "base.html" %} {% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/news_detail.css') }}" />
+
+<div class="news-detail-page">
+    <a href="/" class="back-link">← На главную</a>
+    <div class="news-detail-card">
+        {% if news %} {% if news.media %} {% set media_list =
+        news.media.split(';') %} {% set first_media = media_list[0] if
+        media_list else '' %} {% if first_media %} {% if
+        first_media.endswith(('.mp4','.mov','.avi','.mkv','.webm')) %}
+        <video class="detail-media" controls src="{{ first_media }}"></video>
+        {% else %}
+        <img
+            class="detail-media"
+            src="{{ first_media }}"
+            alt="{{ news.title }}"
+        />
+        {% endif %} {% endif %} {% endif %}
+        <div class="detail-body">
+            <h1 class="detail-title">{{ news.title }}</h1>
+            <div class="detail-content">{{ news.content|safe }}</div>
+            <div class="detail-meta">
+                <span
+                    >{{ news.created_date[:10] if news.created_date else ''
+                    }}</span
+                >
+            </div>
+        </div>
+        {% else %}
+        <div class="detail-body">
+            <p class="detail-not-found">
+                Новость не найдена
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/news_detail.js') }}"></script>
+{% endblock %}

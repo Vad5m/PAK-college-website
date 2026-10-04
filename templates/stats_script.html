@@ -1,0 +1,65 @@
+<script>
+(function() {
+    let clickCount = 0;
+    let loadTime = 0;
+    let startTime = Date.now();
+    let maxScroll = 0;
+    let timerId = null;
+
+    window.addEventListener('load', function() {
+        if (performance.timing) {
+            loadTime = Math.round(performance.timing.loadEventEnd - performance.timing.navigationStart);
+        } else {
+            const perfData = performance.getEntriesByType('navigation')[0];
+            if (perfData) {
+                loadTime = Math.round(perfData.loadEventEnd - perfData.startTime);
+            } else {
+                loadTime = 0;
+            }
+        }
+        if (loadTime < 0 || loadTime > 10000) {
+            loadTime = 0;
+        }
+        sendStats();
+    });
+
+    document.addEventListener('click', function() {
+        clickCount++;
+        if (clickCount % 3 === 0) sendStats();
+    });
+
+    window.addEventListener('scroll', function() {
+        const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+        if (scrollHeight > 0) {
+            const percent = Math.round((window.scrollY / scrollHeight) * 100);
+            if (percent > maxScroll) maxScroll = percent;
+        }
+    });
+
+    window.addEventListener('beforeunload', function() {
+        sendStats();
+    });
+
+    setInterval(sendStats, 30000);
+
+    function sendStats() {
+        if (timerId) return;
+        timerId = setTimeout(() => { timerId = null; }, 3000);
+
+        const timeOnPage = Math.round((Date.now() - startTime) / 1000);
+
+        fetch('/api/stats', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                page: window.location.pathname,
+                screen: window.innerWidth + 'x' + window.innerHeight,
+                load_time: loadTime,
+                time_on_page: timeOnPage,
+                clicks: clickCount,
+                scroll_depth: maxScroll
+            })
+        });
+    }
+})();
+</script>

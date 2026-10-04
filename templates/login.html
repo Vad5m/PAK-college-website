@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Вход для администратора</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}" />
+    </head>
+    <body>
+        <div class="login-card">
+            <div class="login-form-container">
+                <div class="login-title">Доступ администратора</div>
+
+                <div id="errorMsg" class="error-message"></div>
+
+                <form id="adminAuthForm">
+                    <div class="input-group">
+                        <input
+                            type="text"
+                            id="adminLogin"
+                            class="input"
+                            required
+                            autocomplete="off"
+                        />
+                        <label class="user-label">Логин</label>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="password-wrapper">
+                            <input
+                                type="password"
+                                id="adminPassword"
+                                class="input"
+                                required
+                            />
+                            <label class="user-label">Пароль</label>
+                            <button
+                                type="button"
+                                class="toggle-password"
+                                id="togglePassword"
+                            >
+                                👁️
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="login-btn">Войти</button>
+                </form>
+            </div>
+        </div>
+
+        <script src="{{ url_for('static', filename='js/login.js') }}"></script>
+    </body>
+</html>

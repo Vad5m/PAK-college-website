@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/contacts.css') }}">
+<div class="contacts-page">
+    <div class="contacts-header">
+        <h2>
+            <span class="section-icon">📞</span>
+            Контакты
+        </h2>
+        <p>Администрация и сотрудники Пензенского агропромышленного колледжа</p>
+    </div>
+
+    <div class="contacts-table-wrapper">
+        <table class="contacts-table">
+            <thead>
+                <tr>
+                    <th>ФИО</th>
+                    <th>Должность</th>
+                    <th>Контактный телефон</th>
+                    <th>Электронный адрес</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Зарывахин Александр Васильевич</td>
+                    <td>Директор</td>
+                    <td>62-85-87</td>
+                    <td><a href="mailto:pak1935l@mail.ru" class="email-link">pak1935l@mail.ru</a></td>
+                </tr>
+                <tr>
+                    <td>Матвеева Елена Александровна</td>
+                    <td>Зам. директора</td>
+                    <td>62-85-87</td>
+                    <td><a href="mailto:matweev.elena@yandex.ru" class="email-link">matweev.elena@yandex.ru</a></td>
+                </tr>
+                <tr>
+                    <td>Дашкина Венера Шавгятовна</td>
+                    <td>Зам. директора по ВР</td>
+                    <td>62-85-87</td>
+                    <td><a href="mailto:veneradaschkina@yandex.ru" class="email-link">veneradaschkina@yandex.ru</a></td>
+                </tr>
+                <tr>
+                    <td>Садовников Дмитрий Анатольевич</td>
+                    <td>Старший мастер</td>
+                    <td>62-85-87</td>
+                    <td><a href="mailto:sda19_73@mail.ru" class="email-link">sda19_73@mail.ru</a></td>
+                </tr>
+                <tr>
+                    <td>Дубынина Янна Александровна</td>
+                    <td>Заведующий отделением</td>
+                    <td>34-97-44</td>
+                    <td><span class="empty-value">—</span></td>
+                </tr>
+                <tr>
+                    <td>Писарева Ирина Лимирьевна</td>
+                    <td>Социальный педагог</td>
+                    <td>62-85-87</td>
+                    <td><span class="empty-value">—</span></td>
+                </tr>
+                <tr>
+                    <td>Монахова Юлия Александровна</td>
+                    <td>Педагог — организатор</td>
+                    <td>34-97-44</td>
+                    <td><a href="mailto:patbibl@yandex.ru" class="email-link">patbibl@yandex.ru</a></td>
+                </tr>
+                <tr>
+                    <td>Меньшова Светлана Сергеевна</td>
+                    <td>Педагог — психолог</td>
+                    <td>34-95-15</td>
+                    <td><a href="mailto:Menshova-7878@mail.ru" class="email-link">Menshova-7878@mail.ru</a></td>
+                </tr>
+                <tr>
+                    <td>Шередека Ольга Николаевна</td>
+                    <td>Комендант общежития №2</td>
+                    <td>62-85-87</td>
+                    <td><span class="empty-value">—</span></td>
+                </tr>
+                <tr>
+                    <td>Байкова Галина Николаевна</td>
+                    <td>Комендант общежития №1</td>
+                    <td>34-99-63</td>
+                    <td><span class="empty-value">—</span></td>
+                </tr>
+                <tr>
+                    <td>Яшина Е.И.</td>
+                    <td>Главный бухгалтер</td>
+                    <td>62-94-87</td>
+                    <td><a href="mailto:pakbuh@mail.ru" class="email-link">pakbuh@mail.ru</a></td>
+                </tr>
+                <tr>
+                    <td>Кожбатов Анатолий Борисович</td>
+                    <td>Заведующий хозяйством</td>
+                    <td>62-88-60</td>
+                    <td><span class="empty-value">—</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="contacts-extra">
+        <div class="address-cards">
+            <div class="address-card">
+                <h4>📍 Адрес 1</h4>
+                <p><strong>440014 г. Пенза, ул. Лесозащитная, 22</strong></p>
+                <p>📞 <strong>62-85-87</strong></p>
+                <p>🚌 Проезд: автобус № 93, остановка «Магазин «Сосны»»</p>
+            </div>
+            <div class="address-card">
+                <h4>📍 Адрес 2</h4>
+                <p><strong>440012 г. Пенза, ул. Совхоз-техникум, 47</strong></p>
+                <p>📞 <strong>34-97-44</strong></p>
+                <p>🚌 Проезд: автобус № 93, остановка «Совхоз-техникум»</p>
+            </div>
+        </div>
+
+        <div class="info-block">
+            <p class="info-line">
+                <strong>Телефоны приёмных комиссий:</strong>
+                8 (8412) 62-85-87, 8 (8412) 34-97-44
+            </p>
+            <p>
+                <strong>Электронная почта для приёма документов и обращений:</strong>
+                <a href="mailto:pak1935l@mail.ru" class="email-link">pak1935l@mail.ru</a>
+            </p>
+        </div>
+
+        <div class="map-container" id="yandex-map-container">
+            <script type="text/javascript" charset="utf-8" async src="https://api-maps.yandex.ru/services/constructor/1.0/js/?um=constructor%3A18771a533adf6c197416d40b21cb57151703175cea9178251e9dbcf400563fdf&amp;width=500&amp;height=400&amp;lang=ru_RU&amp;scroll=true"></script>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/contacts.js') }}"></script>
+{% endblock %}
