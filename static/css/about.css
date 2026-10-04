@@ -1,0 +1,231 @@
+.history-page {
+    width: 100%;
+}
+
+.history-header {
+    margin-bottom: 32px;
+    text-align: center;
+}
+
+.history-header h2 {
+    font-size: 2rem;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, #0b3b5f, #1e6a8f);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    display: inline-block;
+}
+
+.history-header p {
+    color: #4a627a;
+    font-size: 1rem;
+}
+
+.history-content {
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 28px 32px;
+    margin-bottom: 40px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    border: 1px solid #eef2f0;
+    line-height: 1.65;
+    color: #1e2f3e;
+}
+
+.history-content p {
+    margin-bottom: 18px;
+    font-size: 1rem;
+}
+
+.history-content h3 {
+    font-size: 1.4rem;
+    margin: 28px 0 16px 0;
+    color: #0b3b5f;
+    border-left: 4px solid #ffcd7e;
+    padding-left: 16px;
+}
+
+.history-content h3:first-of-type {
+    margin-top: 8px;
+}
+
+.history-content strong {
+    color: #0b5e7c;
+}
+
+.video-section {
+    background: #f8fafc;
+    border-radius: 24px;
+    padding: 28px 32px;
+    margin-bottom: 40px;
+    border: 1px solid #eef2f0;
+    text-align: center;
+}
+
+.video-section h3 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    color: #0b3b5f;
+}
+
+.video-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+    background: #000;
+}
+
+.video-wrapper video {
+    width: 100%;
+    height: auto;
+    display: block;
+    cursor: pointer;
+}
+
+video {
+    outline: none;
+}
+
+video::-webkit-media-controls-panel {
+    background: linear-gradient(
+        to top,
+        rgba(0, 0, 0, 0.8),
+        rgba(0, 0, 0, 0.4)
+    );
+}
+
+.video-caption {
+    margin-top: 16px;
+    font-size: 0.9rem;
+    color: #5a6e7c;
+}
+
+.media-section {
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    border: 1px solid #eef2f0;
+}
+
+.media-section h3 {
+    font-size: 1.5rem;
+    margin-bottom: 24px;
+    color: #0b3b5f;
+    border-left: 4px solid #ffcd7e;
+    padding-left: 16px;
+}
+
+.media-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.media-card {
+    background: #f8fafc;
+    border-radius: 20px;
+    padding: 20px;
+    transition: all 0.3s ease;
+    border: 1px solid #eef2f0;
+    text-decoration: none;
+    display: block;
+    color: inherit;
+}
+
+.media-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+    border-color: #cbdce8;
+}
+
+.media-title {
+    font-weight: 700;
+    font-size: 1rem;
+    line-height: 1.4;
+    margin-bottom: 8px;
+    color: #0b3b5f;
+}
+
+.media-source {
+    font-size: 0.8rem;
+    color: #7a8e9e;
+    margin-bottom: 10px;
+}
+
+.media-date {
+    font-size: 0.75rem;
+    color: #9aaebf;
+}
+
+.date-highlight {
+    font-weight: 600;
+    color: #0b5e7c;
+    background: #eef2f9;
+    padding: 0 4px;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .history-content {
+        padding: 20px 20px;
+    }
+
+    .history-content h3 {
+        font-size: 1.25rem;
+    }
+
+    .history-content p {
+        font-size: 0.93rem;
+    }
+
+    .video-section {
+        padding: 20px 20px;
+    }
+
+    .video-section h3 {
+        font-size: 1.3rem;
+    }
+
+    .media-section {
+        padding: 20px 20px;
+    }
+
+    .media-section h3 {
+        font-size: 1.3rem;
+    }
+
+    .media-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    .media-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+
+    .media-card {
+        padding: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .history-content {
+        padding: 16px;
+    }
+
+    .history-content h3 {
+        font-size: 1.15rem;
+        margin: 20px 0 12px 0;
+    }
+
+    .history-header h2 {
+        font-size: 1.7rem;
+    }
+}

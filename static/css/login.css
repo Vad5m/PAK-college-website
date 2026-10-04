@@ -1,0 +1,165 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+        "Helvetica Neue", sans-serif;
+    background: linear-gradient(135deg, #0a2e4a 0%, #0c4a6e 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 380px;
+    padding: 0 20px;
+}
+
+.login-form-container {
+    background: rgba(18, 25, 35, 0.65);
+    backdrop-filter: blur(12px);
+    border-radius: 28px;
+    padding: 2rem 1.8rem;
+    box-shadow:
+        0 25px 45px rgba(0, 0, 0, 0.3),
+        0 1px 1px rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.login-title {
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 1.55rem;
+    font-weight: 500;
+    color: #ffffff;
+    letter-spacing: -0.2px;
+    opacity: 0.92;
+}
+
+.input-group {
+    position: relative;
+    margin-bottom: 1.75rem;
+}
+
+.input {
+    width: 100%;
+    border: solid 1.5px rgba(255, 255, 255, 0.35);
+    border-radius: 1rem;
+    background: rgba(10, 25, 35, 0.7);
+    padding: 0.9rem 1rem;
+    font-size: 0.95rem;
+    color: #ffffff;
+    transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+    font-weight: 450;
+}
+
+.input:focus,
+.input:valid {
+    outline: none;
+    border: 1.5px solid #80b6ff;
+    background: rgba(10, 25, 35, 0.85);
+}
+
+.user-label {
+    position: absolute;
+    left: 14px;
+    top: 0;
+    color: #cddfe7;
+    pointer-events: none;
+    transform: translateY(0.9rem);
+    transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 0.95rem;
+    background: transparent;
+    padding: 0 2px;
+}
+
+.input:focus ~ .user-label,
+.input:valid ~ .user-label {
+    transform: translateY(-55%) scale(0.82);
+    background-color: #0f2c3e;
+    padding: 0 6px;
+    color: #9bc0ff;
+    letter-spacing: 0.3px;
+}
+
+.password-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.password-wrapper .input {
+    padding-right: 50px;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 0;
+    margin: 0;
+    z-index: 10;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.toggle-password:hover {
+    opacity: 1;
+}
+
+.login-btn {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(4px);
+    border: 0.8px solid rgba(255, 255, 255, 0.25);
+    padding: 12px;
+    border-radius: 1rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    margin-top: 12px;
+    letter-spacing: 0.3px;
+}
+
+.login-btn:hover {
+    background: rgba(255, 255, 255, 0.22);
+    border-color: rgba(255, 255, 255, 0.45);
+    transform: translateY(-1px);
+}
+
+.login-btn:active {
+    transform: scale(0.97);
+}
+
+.error-message {
+    background: rgba(220, 60, 50, 0.85);
+    backdrop-filter: blur(8px);
+    color: white;
+    padding: 10px 14px;
+    border-radius: 1rem;
+    margin-bottom: 1.2rem;
+    font-size: 0.8rem;
+    text-align: center;
+    display: none;
+    font-weight: 450;
+    border-left: 3px solid #ffb4a2;
+}
+
+.input:focus {
+    box-shadow: 0 0 0 2px rgba(128, 182, 255, 0.2);
+}
