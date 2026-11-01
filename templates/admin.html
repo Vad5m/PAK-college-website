@@ -136,93 +136,18 @@
                     </div>
                 </div>
 
-                <div style="margin-top:20px;">
-                    <div class="section-title"><i class="bi bi-clock-history"></i> Все визиты ({{ visits|length }})</div>
-                    <div class="stats-table-wrap">
-                        {% set visits_list = visits[:100]|list %}
-                        <table class="table-collapsible" id="visits-table">
-                            <thead><tr><th>Время</th><th>IP</th><th>Браузер</th><th>Страница</th><th>Откуда</th></tr></thead>
-                            <tbody>
-                                {% for visit in visits_list[:10] %}
-                                <tr>
-                                    <td style="white-space:nowrap; font-size:11px;">{{ visit.timestamp }}</td>
-                                    <td style="font-size:11px;">{{ visit.ip }}</td>
-                                    <td><span class="badge-stat badge-soft">{{ visit.browser }}</span></td>
-                                    <td style="font-size:11px;">{{ visit.page }}</td>
-                                    <td style="font-size:10px; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ visit.referer }}">{{ visit.referer }}</td>
-                                </tr>
-                                {% endfor %}
-                                {% if visits_list|length > 10 %}
-                                <tbody class="extra-rows">
-                                    {% for visit in visits_list[10:] %}
-                                    <tr>
-                                        <td style="white-space:nowrap; font-size:11px;">{{ visit.timestamp }}</td>
-                                        <td style="font-size:11px;">{{ visit.ip }}</td>
-                                        <td><span class="badge-stat badge-soft">{{ visit.browser }}</span></td>
-                                        <td style="font-size:11px;">{{ visit.page }}</td>
-                                        <td style="font-size:10px; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ visit.referer }}">{{ visit.referer }}</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                                {% endif %}
-                            </tbody>
-                        </table>
-                        {% if visits_list|length > 10 %}
-                        <button class="toggle-table-btn" data-target="visits-table">
-                            <i class="bi bi-chevron-down"></i> Показать все ({{ visits_list|length }})
-                        </button>
-                        {% endif %}
-                        {% if visits|length > 100 %}
-                        <p style="color:#6f85a5; margin-top:8px; font-size:11px;">Показано 100 из {{ visits|length }} визитов</p>
-                        {% endif %}
+                <div style="margin-top:20px;" id="visits-block">
+                    <div class="section-title"><i class="bi bi-clock-history"></i> Все визиты (<span id="visits-total">{{ visits|length }}</span>)</div>
+                    <div class="stats-table-wrap" id="visits-table-wrap">
+                        <div class="table-loading">Загрузка визитов...</div>
                     </div>
                 </div>
 
-                <div style="margin-top:20px;">
+                <div style="margin-top:20px;" id="behavior-block">
                     <div class="section-title"><i class="bi bi-graph-up"></i> Поведение пользователей</div>
-                    {% if stats.clients %}
-                    {% set clients_list = stats.clients[-50:]|reverse|list %}
-                    <div class="stats-table-wrap">
-                        <table class="table-collapsible" id="behavior-table">
-                            <thead><tr><th>Время</th><th>Страница</th><th>Экран</th><th>Загрузка</th><th>Время на стр.</th><th>Клики</th><th>Скролл</th></tr></thead>
-                            <tbody>
-                                {% for client in clients_list[:10] %}
-                                <tr>
-                                    <td style="white-space:nowrap; font-size:11px;">{{ client.timestamp }}</td>
-                                    <td style="font-size:11px;">{{ client.page }}</td>
-                                    <td style="font-size:11px;">{{ client.screen }}</td>
-                                    <td style="font-size:11px;">{{ client.load_time }}ms</td>
-                                    <td style="font-size:11px;">{{ client.time_on_page }}с</td>
-                                    <td style="font-size:11px;">{{ client.clicks }}</td>
-                                    <td style="font-size:11px;">{{ client.scroll_depth }}%</td>
-                                </tr>
-                                {% endfor %}
-                                {% if clients_list|length > 10 %}
-                                <tbody class="extra-rows">
-                                    {% for client in clients_list[10:] %}
-                                    <tr>
-                                        <td style="white-space:nowrap; font-size:11px;">{{ client.timestamp }}</td>
-                                        <td style="font-size:11px;">{{ client.page }}</td>
-                                        <td style="font-size:11px;">{{ client.screen }}</td>
-                                        <td style="font-size:11px;">{{ client.load_time }}ms</td>
-                                        <td style="font-size:11px;">{{ client.time_on_page }}с</td>
-                                        <td style="font-size:11px;">{{ client.clicks }}</td>
-                                        <td style="font-size:11px;">{{ client.scroll_depth }}%</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                                {% endif %}
-                            </tbody>
-                        </table>
-                        {% if clients_list|length > 10 %}
-                        <button class="toggle-table-btn" data-target="behavior-table">
-                            <i class="bi bi-chevron-down"></i> Показать все ({{ clients_list|length }})
-                        </button>
-                        {% endif %}
+                    <div class="stats-table-wrap" id="behavior-table-wrap">
+                        <div class="table-loading">Загрузка данных...</div>
                     </div>
-                    {% else %}
-                    <p style="color:#6f85a5; font-size:13px;">Нет данных. Посетите главную страницу.</p>
-                    {% endif %}
                 </div>
             </div>
         </div>
@@ -272,5 +197,71 @@
         };
     </script>
     <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+    <script>
+    (function () {
+        function esc(t){var d=document.createElement('div');d.textContent=t==null?'':t;return d.innerHTML;}
+        async function fetchJson(url) {
+            var resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
+            var ct = resp.headers.get('content-type') || '';
+            if (!resp.ok || ct.indexOf('application/json') === -1) {
+                throw new Error('Не JSON: ' + resp.status + ' ' + ct);
+            }
+            return resp.json();
+        }
+        function fill(wrapId, tableId, headers, rows, label) {
+            var wrap = document.getElementById(wrapId);
+            if (!wrap) return;
+            if (!rows.length) { wrap.innerHTML = '<div class="table-loading">Нет данных</div>'; return; }
+            var first = rows.slice(0,10), extra = rows.slice(10);
+            var html = '<table class="table-collapsible" id="'+tableId+'"><thead><tr>'+headers.map(function(h){return '<th>'+h+'</th>';}).join('')+'</tr></thead><tbody>';
+            first.forEach(function(r){html+='<tr>'+r+'</tr>';});
+            if (extra.length){ html+='</tbody><tbody class="extra-rows">'; extra.forEach(function(r){html+='<tr>'+r+'</tr>';}); }
+            html+='</tbody></table>';
+            if (extra.length) html+='<button class="toggle-table-btn" data-target="'+tableId+'"><i class="bi bi-chevron-down"></i> '+label+' ('+rows.length+')</button>';
+            wrap.innerHTML = html;
+            var b = wrap.querySelector('.toggle-table-btn');
+            if (b) b.addEventListener('click', function(){
+                var t = document.getElementById(tableId); var ex = t.classList.toggle('expanded');
+                this.innerHTML = ex ? '<i class="bi bi-chevron-up"></i> Скрыть' : '<i class="bi bi-chevron-down"></i> '+label+' ('+rows.length+')';
+            });
+        }
+        async function loadVisits() {
+            var wrap = document.getElementById('visits-table-wrap');
+            if (!wrap) return;
+            try {
+                var data = await fetchJson('/api/admin/visits?limit=100');
+                var visits = data.visits || [];
+                var total = data.total != null ? data.total : visits.length;
+                var totalEl = document.getElementById('visits-total'); if (totalEl) totalEl.textContent = total;
+                fill('visits-table-wrap','visits-table',['Время','IP','Браузер','Страница','Откуда'],
+                    visits.map(function(v){return '<td style="white-space:nowrap;font-size:11px;">'+esc(v.timestamp)+'</td><td style="font-size:11px;">'+esc(v.ip)+'</td><td><span class="badge-stat badge-soft">'+esc(v.browser)+'</span></td><td style="font-size:11px;">'+esc(v.page)+'</td><td style="font-size:10px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(v.referer)+'">'+esc(v.referer)+'</td>';}),'Показать все');
+                if (total > visits.length) {
+                    var note = document.createElement('p');
+                    note.style.cssText = 'color:#6f85a5;margin-top:8px;font-size:11px;';
+                    note.textContent = 'Показано ' + visits.length + ' из ' + total + ' визитов';
+                    wrap.appendChild(note);
+                }
+            } catch (e) {
+                wrap.innerHTML = '<div class="table-loading">Визиты: ' + esc(e.message) + '</div>';
+            }
+        }
+        async function loadBehavior() {
+            var wrap = document.getElementById('behavior-table-wrap');
+            if (!wrap) return;
+            try {
+                var data = await fetchJson('/api/admin/behavior?limit=50');
+                var clients = data.clients || [];
+                if (!clients.length) { wrap.innerHTML = '<p style="color:#6f85a5;font-size:13px;">Нет данных. Посетите главную страницу.</p>'; return; }
+                fill('behavior-table-wrap','behavior-table',['Время','Страница','Экран','Загрузка','Время на стр.','Клики','Скролл'],
+                    clients.map(function(c){return '<td style="white-space:nowrap;font-size:11px;">'+esc(c.timestamp)+'</td><td style="font-size:11px;">'+esc(c.page)+'</td><td style="font-size:11px;">'+esc(c.screen)+'</td><td style="font-size:11px;">'+esc(c.load_time)+'ms</td><td style="font-size:11px;">'+esc(c.time_on_page)+'с</td><td style="font-size:11px;">'+esc(c.clicks)+'</td><td style="font-size:11px;">'+esc(c.scroll_depth)+'%</td>';}),'Показать все');
+            } catch (e) {
+                wrap.innerHTML = '<div class="table-loading">Поведение: ' + esc(e.message) + '</div>';
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+            setTimeout(function () { loadVisits(); loadBehavior(); }, 0);
+        });
+    })();
+    </script>
 </body>
 </html>
