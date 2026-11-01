@@ -611,6 +611,54 @@ def api_admins():
     return jsonify({"success": True, "admins": [dict(a) for a in admins]})
 
 
+@app.route("/api/admin/visits")
+def api_admin_visits():
+    if "admin_id" not in session:
+        return jsonify({"success": False, "message": "Не авторизован"}), 401
+
+    try:
+        limit = int(request.args.get("limit", 100))
+    except (TypeError, ValueError):
+        limit = 100
+    limit = max(1, min(limit, 1000))
+
+    conn = get_stats_db()
+    cursor = conn.cursor()
+    total = cursor.execute("SELECT COUNT(*) as c FROM visits").fetchone()["c"]
+    rows = cursor.execute(
+        "SELECT timestamp, ip, browser, page, referer FROM visits ORDER BY id DESC LIMIT ?",
+        (limit,),
+    ).fetchall()
+    conn.close()
+
+    visits = [dict(r) for r in rows]
+    return jsonify({"success": True, "visits": visits, "total": total})
+
+
+@app.route("/api/admin/behavior")
+def api_admin_behavior():
+    if "admin_id" not in session:
+        return jsonify({"success": False, "message": "Не авторизован"}), 401
+
+    try:
+        limit = int(request.args.get("limit", 50))
+    except (TypeError, ValueError):
+        limit = 50
+    limit = max(1, min(limit, 500))
+
+    conn = get_stats_db()
+    cursor = conn.cursor()
+    rows = cursor.execute(
+        """SELECT timestamp, page, screen, load_time, time_on_page, clicks, scroll_depth
+           FROM client_stats ORDER BY id DESC LIMIT ?""",
+        (limit,),
+    ).fetchall()
+    conn.close()
+
+    clients = [dict(r) for r in rows]
+    return jsonify({"success": True, "clients": clients})
+
+
 @app.route("/admin/add_admin", methods=["POST"])
 def add_admin():
     if "admin_id" not in session:
