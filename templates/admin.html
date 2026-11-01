@@ -7,7 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
 </head>
 <body>
     <header class="admin-header">
@@ -44,7 +44,7 @@
                 <h2><i class="bi bi-graph-up-arrow"></i> Статистика сайта</h2>
 
                 <div class="cards">
-                    <div class="card-stat"><div class="num">{{ stats.visits|length }}</div><div class="label">Всего визитов</div><div class="icon-bg"><i class="bi bi-eye"></i></div></div>
+                    <div class="card-stat"><div class="num">{{ stats.visits_total }}</div><div class="label">Всего визитов</div><div class="icon-bg"><i class="bi bi-eye"></i></div></div>
                     <div class="card-stat"><div class="num">{{ unique_ips }}</div><div class="label">Уникальных посетителей</div><div class="icon-bg"><i class="bi bi-people"></i></div></div>
                     <div class="card-stat"><div class="num">{{ stats.page_views|length }}</div><div class="label">Уникальных страниц</div><div class="icon-bg"><i class="bi bi-files"></i></div></div>
                     <div class="card-stat"><div class="num">{{ stats.browsers|length }}</div><div class="label">Типов браузеров</div><div class="icon-bg"><i class="bi bi-browser-chrome"></i></div></div>
@@ -137,7 +137,7 @@
                 </div>
 
                 <div style="margin-top:20px;" id="visits-block">
-                    <div class="section-title"><i class="bi bi-clock-history"></i> Все визиты (<span id="visits-total">{{ visits|length }}</span>)</div>
+                    <div class="section-title"><i class="bi bi-clock-history"></i> Все визиты (<span id="visits-total">{{ visits_total }}</span>)</div>
                     <div class="stats-table-wrap" id="visits-table-wrap">
                         <div class="table-loading">Загрузка визитов...</div>
                     </div>
@@ -196,7 +196,7 @@
             page_views: {{ stats.page_views|tojson }}
         };
     </script>
-    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/admin.js') }}" defer></script>
     <script>
     (function () {
         function esc(t){var d=document.createElement('div');d.textContent=t==null?'':t;return d.innerHTML;}
@@ -225,7 +225,10 @@
                 this.innerHTML = ex ? '<i class="bi bi-chevron-up"></i> Скрыть' : '<i class="bi bi-chevron-down"></i> '+label+' ('+rows.length+')';
             });
         }
+        var visitsLoaded = false, behaviorLoaded = false;
         async function loadVisits() {
+            if (visitsLoaded) return;
+            visitsLoaded = true;
             var wrap = document.getElementById('visits-table-wrap');
             if (!wrap) return;
             try {
@@ -246,6 +249,8 @@
             }
         }
         async function loadBehavior() {
+            if (behaviorLoaded) return;
+            behaviorLoaded = true;
             var wrap = document.getElementById('behavior-table-wrap');
             if (!wrap) return;
             try {
@@ -258,8 +263,23 @@
                 wrap.innerHTML = '<div class="table-loading">Поведение: ' + esc(e.message) + '</div>';
             }
         }
+        function observeBlock(id, callback) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            if (!('IntersectionObserver' in window)) { callback(); return; }
+            var obs = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) {
+                        obs.disconnect();
+                        callback();
+                    }
+                });
+            }, { rootMargin: '200px' });
+            obs.observe(el);
+        }
         document.addEventListener('DOMContentLoaded', function () {
-            setTimeout(function () { loadVisits(); loadBehavior(); }, 0);
+            observeBlock('visits-block', loadVisits);
+            observeBlock('behavior-block', loadBehavior);
         });
     })();
     </script>
