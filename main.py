@@ -1913,9 +1913,37 @@ def admin_panel():
         session.clear()
         return redirect(url_for("home"))
 
-    stats = get_stats_data()
-    unique_ips = get_unique_ips_count()
-    visits = stats['visits']
+    sconn = get_stats_db()
+    cur = sconn.cursor()
+
+    visits_total = cur.execute("SELECT COUNT(*) AS c FROM visits").fetchone()["c"]
+    unique_ips = cur.execute("SELECT COUNT(DISTINCT ip) AS c FROM visits").fetchone()["c"]
+
+    browsers_dict = {
+        r["browser"]: r["count"]
+        for r in cur.execute("SELECT browser, count FROM browser_stats").fetchall()
+    }
+    page_views_dict = {
+        r["page"]: r["count"]
+        for r in cur.execute("SELECT page, count FROM page_views").fetchall()
+    }
+    referers_dict = {
+        r["referer"]: r["count"]
+        for r in cur.execute("SELECT referer, count FROM referer_stats").fetchall()
+    }
+    screens_dict = {
+        r["screen"]: r["count"]
+        for r in cur.execute("SELECT screen, count FROM screen_stats").fetchall()
+    }
+    sconn.close()
+
+    stats = {
+        "visits_total": visits_total,
+        "browsers": browsers_dict,
+        "page_views": page_views_dict,
+        "referers": referers_dict,
+        "screens": screens_dict,
+    }
 
     return render_template(
         "admin.html",
@@ -1923,7 +1951,7 @@ def admin_panel():
         user_level=admin["level"],
         stats=stats,
         unique_ips=unique_ips,
-        visits=visits,
+        visits_total=visits_total,
     )
 
 
