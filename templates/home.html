@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/_left_menu.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
 <div class="homepage">
 
@@ -8,14 +9,7 @@
     {% endif %}
 
     <div class="home-layout">
-        <div class="side-menu">
-            <div class="menu-header">
-                {% if is_admin %}
-                <button class="add-menu-btn" id="addLeftMenuBtn">+</button>
-                {% endif %}
-            </div>
-            <div id="leftMenuContainer"></div>
-        </div>
+        {% include '_left_menu.html' %}
 
         <div class="news-section">
             <div class="news-header">
@@ -76,24 +70,11 @@
     </div>
 </div>
 
-<!-- Mobile bottom buttons -->
 <div class="mobile-bottom-buttons">
-    <button class="mobile-bottom-btn left-btn" id="mobileLeftBtn">
-        По законодательству
-    </button>
-    <button class="mobile-bottom-btn right-btn" id="mobileRightBtn">
-        Инфо
-    </button>
+    <button class="mobile-bottom-btn left-btn" id="mobileLeftBtn">По законодательству</button>
+    <button class="mobile-bottom-btn right-btn" id="mobileRightBtn">Инфо</button>
 </div>
 
-<div id="panelOverlay" class="panel-overlay"></div>
-<div id="mobileLeftPanel" class="mobile-panel left">
-    <div class="panel-header">
-        <h3>По законодательству</h3>
-        <button class="close-panel-btn" data-panel="left">&times;</button>
-    </div>
-    <div id="mobileLeftMenuContainer"></div>
-</div>
 <div id="mobileRightPanel" class="mobile-panel right">
     <div class="panel-header">
         <h3>Полезная информация</h3>
@@ -117,47 +98,6 @@
     </div>
 </div>
 
-<div id="leftMenuModal" class="modal">
-    <div class="modal-content">
-        <span class="close">&times;</span>
-        <h3>Добавить пункт в левое меню</h3>
-        <div class="input-group">
-            <input type="text" id="menuLetter" class="input" placeholder=" " required />
-            <label class="user-label">Название</label>
-        </div>
-        <div class="input-group">
-            <textarea id="menuText" class="input" rows="15" placeholder=" "></textarea>
-            <label class="user-label">HTML-текст (будет показан при клике)</label>
-        </div>
-        <div class="input-group">
-            <input type="text" id="menuLink" class="input" placeholder=" " />
-            <label class="user-label">Ссылка (необязательно, если заполнена - переход по ссылке вместо текста)</label>
-        </div>
-        <button id="submitLeftMenu">Добавить</button>
-    </div>
-</div>
-
-<div id="editLeftMenuModal" class="modal">
-    <div class="modal-content">
-        <span class="close">&times;</span>
-        <h3>Редактировать пункт меню</h3>
-        <input type="hidden" id="editMenuId" value="" />
-        <div class="input-group">
-            <input type="text" id="editMenuLetter" class="input" placeholder=" " required />
-            <label class="user-label">Название</label>
-        </div>
-        <div class="input-group">
-            <textarea id="editMenuText" class="input" rows="15" placeholder=" "></textarea>
-            <label class="user-label">HTML-текст</label>
-        </div>
-        <div class="input-group">
-            <input type="text" id="editMenuLink" class="input" placeholder=" " />
-            <label class="user-label">Ссылка (необязательно)</label>
-        </div>
-        <button id="submitEditMenu">Сохранить</button>
-    </div>
-</div>
-
 <div id="newsModal" class="modal">
     <div class="modal-content">
         <span class="close">&times;</span>
@@ -174,9 +114,7 @@
         <div id="newsDragDropArea" class="drag-drop-area">
             <div class="upload-icon">📎</div>
             <div class="upload-text">Перетащите изображения или видео сюда</div>
-            <div class="upload-hint">
-                или нажмите для выбора (можно несколько файлов)
-            </div>
+            <div class="upload-hint">или нажмите для выбора (можно несколько файлов)</div>
         </div>
         <input type="file" id="newsMediaFile" accept="image/*,video/*" multiple class="hidden-file-input" />
         <div id="newsPreviewContainer" class="preview-grid"></div>
@@ -186,14 +124,11 @@
                 <label for="newsDate">Дата публикации</label>
                 <input type="date" id="newsDate" class="news-date-input" />
             </div>
-            <button id="submitNews" class="submit-news-btn">
-                Добавить новость
-            </button>
+            <button id="submitNews" class="submit-news-btn">Добавить новость</button>
         </div>
     </div>
 </div>
 
-<!-- Промо модальное окно -->
 <div id="promoModal" class="modal">
     <div class="modal-content">
         <span class="close">&times;</span>
@@ -225,9 +160,7 @@
                 <textarea id="promoHtmlContent" class="input" rows="8" placeholder=" "></textarea>
                 <label class="user-label">HTML-код для вставки</label>
             </div>
-            <div class="html-hint">
-                Вставьте HTML-код виджета (например, от Госуслуг)
-            </div>
+            <div class="html-hint">Вставьте HTML-код виджета (например, от Госуслуг)</div>
         </div>
 
         <div class="input-group">
@@ -247,7 +180,16 @@
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <script>
     window.isAdmin = {{ is_admin|tojson }};
+    window.LEFT_MENU_API = {
+        items:    '/api/left_menu_items',
+        text:     '/left_menu/view/',
+        add:      '/admin/add_left_menu',
+        update:   '/admin/update_left_menu/',
+        delete:   '/admin/delete_left_menu/',
+        reorder:  '/admin/reorder_left_menu'
+    };
 </script>
+<script src="{{ url_for('static', filename='js/left_menu.js') }}"></script>
 <script src="{{ url_for('static', filename='js/home.js') }}"></script>
 {% endblock %}
 {% include 'stats_script.html' %}

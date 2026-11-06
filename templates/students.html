@@ -1,16 +1,10 @@
 {% extends "base.html" %} {% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/_left_menu.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/students.css') }}" />
 <div class="students-page">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/students.css') }}" />
 
     <div class="students-layout">
-        <div class="side-menu">
-            <div class="menu-header">
-                {% if is_admin %}
-                <button class="add-menu-btn" id="addMenuBtn">+</button>
-                {% endif %}
-            </div>
-            <div id="menuContainer"></div>
-        </div>
+        {% include '_left_menu.html' %}
 
         <div class="content-section">
             <div class="content-header">
@@ -60,7 +54,16 @@
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script>
         window.isAdmin = {{ is_admin|tojson }};
+        window.LEFT_MENU_API = {
+            items:    '/api/students_menu_items',
+            text:     '/api/students_menu_text/',
+            add:      '/admin/add_students_menu',
+            update:   '/admin/update_students_menu/',
+            delete:   '/admin/delete_students_menu/',
+            reorder:  '/admin/reorder_students_menu'
+        };
     </script>
+    <script src="{{ url_for('static', filename='js/left_menu.js') }}"></script>
     <script src="{{ url_for('static', filename='js/students.js') }}"></script>
 </div>
 {% endblock %}

@@ -1,0 +1,120 @@
+<div class="side-menu" data-page-type="{{ page_type|default('home') }}">
+    <div class="menu-header">
+        {% if is_admin %}
+        <button class="add-menu-btn" id="addLeftMenuBtn" type="button">+</button>
+        {% endif %}
+    </div>
+    <div id="leftMenuContainer"></div>
+</div>
+
+<div id="panelOverlay" class="panel-overlay"></div>
+<div id="mobileLeftPanel" class="mobile-panel left">
+    <div class="panel-header">
+        <h3>По законодательству</h3>
+        <button class="close-panel-btn" data-panel="left">&times;</button>
+    </div>
+    <div id="mobileLeftMenuContainer"></div>
+</div>
+
+<div id="editorChoiceModal" class="modal editor-choice-modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3>Добавить пункт в левое меню</h3>
+
+        <div class="input-group">
+            <input type="text" id="editorChoiceName" class="input" placeholder=" " required />
+            <label class="user-label">Название</label>
+        </div>
+
+        <div class="choice-buttons">
+            <button class="choice-btn" id="choiceNewEditor" type="button">
+                <span class="choice-icon">📝</span>
+                <span class="choice-text">
+                    <span class="choice-title">Новый редактор</span>
+                    <span class="choice-desc">Расширенный редактор с медиа, таблицами и файлами</span>
+                </span>
+            </button>
+            <button class="choice-btn" id="choiceHtmlEditor" type="button">
+                <span class="choice-icon">📄</span>
+                <span class="choice-text">
+                    <span class="choice-title">HTML-редактирование</span>
+                    <span class="choice-desc">Простой HTML-код или ссылка</span>
+                </span>
+            </button>
+        </div>
+
+        <div class="editor-field">
+            <div class="input-group">
+                <input type="text" id="editorChoiceLink" class="input" placeholder=" " />
+                <label class="user-label">Ссылка (необязательно)</label>
+            </div>
+        </div>
+
+        <div id="editorChoiceHtmlSection" style="display:none;">
+            <div class="input-group">
+                <textarea id="editorChoiceHtml" class="input" rows="8" placeholder=" "></textarea>
+                <label class="user-label">HTML-текст (будет показан при клике)</label>
+            </div>
+            <div class="editor-preview" id="editorChoicePreview"></div>
+        </div>
+
+        <div class="editor-actions">
+            <button class="btn-cancel" id="editorChoiceCancel">Отмена</button>
+            <button class="btn-create" id="editorChoiceCreate" disabled>Создать</button>
+        </div>
+    </div>
+</div>
+
+<div id="newEditorModal" class="new-editor-modal">
+    <div class="new-editor-header">
+        <h3 id="newEditorTitle">Новый редактор</h3>
+        <div class="new-editor-header-actions">
+            <button class="btn-cancel" id="newEditorCancel">Отмена</button>
+            <button class="btn-create" id="newEditorSave">Сохранить</button>
+        </div>
+    </div>
+    <div class="new-editor-frame-wrapper">
+        <iframe id="newEditorFrame" src="about:blank" frameborder="0"></iframe>
+    </div>
+</div>
+
+<div id="leftMenuModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3>Добавить пункт в левое меню</h3>
+        <div class="input-group">
+            <input type="text" id="menuLetter" class="input" placeholder=" " required />
+            <label class="user-label">Название</label>
+        </div>
+        <div class="input-group">
+            <textarea id="menuText" class="input" rows="15" placeholder=" "></textarea>
+            <label class="user-label">HTML-текст</label>
+        </div>
+        <div class="input-group">
+            <input type="text" id="menuLink" class="input" placeholder=" " />
+            <label class="user-label">Ссылка (необязательно)</label>
+        </div>
+        <button id="submitLeftMenu">Добавить</button>
+    </div>
+</div>
+
+<div id="editLeftMenuModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3>Редактировать пункт меню</h3>
+        <input type="hidden" id="editMenuId" value="" />
+        <div class="input-group">
+            <input type="text" id="editMenuLetter" class="input" placeholder=" " required />
+            <label class="user-label">Название</label>
+        </div>
+        <div class="input-group">
+            <textarea id="editMenuText" class="input" rows="15" placeholder=" "></textarea>
+            <label class="user-label">HTML-текст</label>
+        </div>
+        <div class="input-group">
+            <input type="text" id="editMenuLink" class="input" placeholder=" " />
+            <label class="user-label">Ссылка (необязательно)</label>
+        </div>
+        <button id="submitEditMenu">Сохранить</button>
+    </div>
+</div>

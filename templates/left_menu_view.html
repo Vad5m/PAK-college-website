@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ item_title }}</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+body { display: flex; flex-direction: column; background: #f8fafc; }
+.page-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 20px; background: #0b3b5f; color: #fff; flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.page-header h1 { font-size: 16px; font-weight: 600; margin: 0; }
+.page-header-actions { display: flex; gap: 8px; }
+.page-header-actions button {
+    padding: 8px 20px; border-radius: 8px; font-size: 14px; font-family: inherit;
+    font-weight: 500; cursor: pointer; border: none; transition: background 0.15s;
+}
+.btn-save { background: #3b82f6; color: #fff; }
+.btn-save:hover { background: #2563eb; }
+.btn-save:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-close { background: rgba(255,255,255,0.15); color: #fff; }
+.btn-close:hover { background: rgba(255,255,255,0.3); }
+.page-frame { flex: 1; min-height: 0; }
+.page-frame iframe { width: 100%; height: 100%; border: none; display: block; }
+.save-status {
+    position: fixed; bottom: 16px; right: 20px; padding: 8px 16px;
+    background: #1e293b; color: #fff; border-radius: 20px; font-size: 13px;
+    opacity: 0; transform: translateY(6px); transition: opacity 0.25s, transform 0.25s;
+    pointer-events: none; z-index: 100;
+}
+.save-status.show { opacity: 1; transform: translateY(0); }
+.save-status.ok { background: #16a34a; }
+.save-status.err { background: #ef4444; }
+</style>
+</head>
+<body>
+<div class="page-header">
+    <h1>{{ item_title }}</h1>
+    <div class="page-header-actions">
+        {% if mode == 'edit' %}
+        <button class="btn-save" id="saveBtn">Сохранить</button>
+        {% endif %}
+        <button class="btn-close" id="closeBtn">Закрыть</button>
+    </div>
+</div>
+<div class="page-frame">
+    <iframe id="editorFrame" src="/text_redactor?admin=1"></iframe>
+</div>
+<div class="save-status" id="saveStatus"></div>
+
+<script>
+var MODE = "{{ mode }}";
+var ITEM_ID = {{ item_id }};
+var ITEM_TITLE = {{ item_title|tojson }};
+var ITEM_HTML = {{ item_html|tojson }};
+var frame = document.getElementById('editorFrame');
+var saveBtn = document.getElementById('saveBtn');
+var closeBtn = document.getElementById('closeBtn');
+var saveStatus = document.getElementById('saveStatus');
+
+function showStatus(text, cls) {
+    saveStatus.textContent = text;
+    saveStatus.className = 'save-status show ' + (cls || '');
+    setTimeout(function() { saveStatus.classList.remove('show'); }, 1800);
+}
+
+frame.onload = function() {
+    setTimeout(function() {
+        try {
+            var win = frame.contentWindow;
+            if (win.VD5Editor) {
+                win.VD5Editor.setEditing(MODE === 'edit');
+                win.postMessage({ type: 'setContent', html: ITEM_HTML }, '*');
+            }
+        } catch (e) { console.error(e); }
+    }, 300);
+};
+
+if (saveBtn) {
+    saveBtn.addEventListener('click', function() {
+        var win = frame.contentWindow;
+        var html = '';
+        try {
+            if (win.VD5Editor) html = win.VD5Editor.getHTML();
+        } catch (e) { html = ''; }
+        if (!html || !html.trim()) {
+            showStatus('Пусто — нечего сохранять', 'err');
+            return;
+        }
+        saveBtn.disabled = true;
+        fetch('/admin/update_left_menu/' + ITEM_ID, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ letter: ITEM_TITLE, text: html, link: '' })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(resp) {
+            if (resp && resp.success) {
+                ITEM_HTML = html;
+                showStatus('Сохранено', 'ok');
+            } else {
+                showStatus('Ошибка: ' + ((resp && resp.message) || 'неизвестно'), 'err');
+            }
+        })
+        .catch(function() { showStatus('Ошибка сети', 'err'); })
+        .finally(function() { saveBtn.disabled = false; });
+    });
+}
+
+closeBtn.addEventListener('click', function() {
+    if (window.opener) window.close();
+    else window.location.href = '/';
+});
+</script>
+</body>
+</html>
