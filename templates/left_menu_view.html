@@ -8,6 +8,7 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
 body { display: flex; flex-direction: column; background: #f8fafc; }
+
 .page-header {
     display: flex; align-items: center; justify-content: space-between;
     padding: 10px 20px; background: #0b3b5f; color: #fff; flex-shrink: 0;
@@ -24,8 +25,46 @@ body { display: flex; flex-direction: column; background: #f8fafc; }
 .btn-save:disabled { opacity: 0.4; cursor: not-allowed; }
 .btn-close { background: rgba(255,255,255,0.15); color: #fff; }
 .btn-close:hover { background: rgba(255,255,255,0.3); }
+
 .page-frame { flex: 1; min-height: 0; }
 .page-frame iframe { width: 100%; height: 100%; border: none; display: block; }
+
+.page-view {
+    flex: 1;
+    overflow-y: auto;
+    padding: 32px 20px;
+}
+.page-view-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    background: #ffffff;
+    padding: 32px;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    font-size: 1rem;
+    line-height: 1.8;
+    color: #334155;
+}
+.page-view-inner h1 { font-size: 1.8rem; color: #0b3b5f; margin-top: 0; }
+.page-view-inner h2 { font-size: 1.5rem; color: #0b3b5f; margin-top: 20px; margin-bottom: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; }
+.page-view-inner h3 { font-size: 1.3rem; color: #1e6a8f; margin-top: 15px; }
+.page-view-inner h4, .page-view-inner h5, .page-view-inner h6 { color: #1e6a8f; }
+.page-view-inner a { color: #0b3b5f; text-decoration: underline; }
+.page-view-inner a:hover { color: #1e6a8f; }
+.page-view-inner table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+.page-view-inner table, .page-view-inner th, .page-view-inner td { border: 1px solid #cbd5e1; }
+.page-view-inner th, .page-view-inner td { padding: 8px 12px; text-align: left; }
+.page-view-inner th { background: #f1f5f9; font-weight: 600; }
+.page-view-inner ul, .page-view-inner ol { margin: 10px 0; padding-left: 25px; }
+.page-view-inner img { max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0; }
+.page-view-inner iframe { max-width: 100%; }
+
+@media (max-width: 767px) {
+    .page-view { padding: 0; }
+    .page-view-inner { padding: 20px; border-radius: 0; border: none; box-shadow: none; }
+}
+
 .save-status {
     position: fixed; bottom: 16px; right: 20px; padding: 8px 16px;
     background: #1e293b; color: #fff; border-radius: 20px; font-size: 13px;
@@ -47,11 +86,22 @@ body { display: flex; flex-direction: column; background: #f8fafc; }
         <button class="btn-close" id="closeBtn">Закрыть</button>
     </div>
 </div>
+
+{% if mode == 'view' %}
+<div class="page-view">
+    <div class="page-view-inner">
+        {{ item_html|safe }}
+    </div>
+</div>
+{% else %}
 <div class="page-frame">
     <iframe id="editorFrame" src="/text_redactor?admin=1"></iframe>
 </div>
+{% endif %}
+
 <div class="save-status" id="saveStatus"></div>
 
+{% if mode == 'edit' %}
 <script>
 var MODE = "{{ mode }}";
 var ITEM_ID = {{ item_id }};
@@ -73,7 +123,7 @@ frame.onload = function() {
         try {
             var win = frame.contentWindow;
             if (win.VD5Editor) {
-                win.VD5Editor.setEditing(MODE === 'edit');
+                win.VD5Editor.setEditing(true);
                 win.postMessage({ type: 'setContent', html: ITEM_HTML }, '*');
             }
         } catch (e) { console.error(e); }
@@ -116,5 +166,14 @@ closeBtn.addEventListener('click', function() {
     else window.location.href = '/';
 });
 </script>
+{% else %}
+<script>
+var closeBtn = document.getElementById('closeBtn');
+closeBtn.addEventListener('click', function() {
+    if (window.opener) window.close();
+    else window.location.href = '/';
+});
+</script>
+{% endif %}
 </body>
 </html>
