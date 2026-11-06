@@ -107,10 +107,19 @@ var MODE = "{{ mode }}";
 var ITEM_ID = {{ item_id }};
 var ITEM_TITLE = {{ item_title|tojson }};
 var ITEM_HTML = {{ item_html|tojson }};
+var PAGE_TYPE = "{{ page_type|default('home') }}";
 var frame = document.getElementById('editorFrame');
 var saveBtn = document.getElementById('saveBtn');
 var closeBtn = document.getElementById('closeBtn');
 var saveStatus = document.getElementById('saveStatus');
+
+var updateUrls = {
+    'home': '/admin/update_left_menu/',
+    'staff': '/admin/update_staff_menu/',
+    'abiturient': '/admin/update_abiturient_menu/',
+    'parents': '/admin/update_parents_menu/',
+    'students': '/admin/update_students_menu/'
+};
 
 function showStatus(text, cls) {
     saveStatus.textContent = text;
@@ -141,8 +150,9 @@ if (saveBtn) {
             showStatus('Пусто — нечего сохранять', 'err');
             return;
         }
+        var updateUrl = updateUrls[PAGE_TYPE] || updateUrls['home'];
         saveBtn.disabled = true;
-        fetch('/admin/update_left_menu/' + ITEM_ID, {
+        fetch(updateUrl + ITEM_ID, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ letter: ITEM_TITLE, text: html, link: '' })
@@ -152,6 +162,9 @@ if (saveBtn) {
             if (resp && resp.success) {
                 ITEM_HTML = html;
                 showStatus('Сохранено', 'ok');
+                if (window.opener && !window.opener.closed && typeof window.opener.refreshLeftMenu === 'function') {
+                    try { window.opener.refreshLeftMenu(); } catch (e) {}
+                }
             } else {
                 showStatus('Ошибка: ' + ((resp && resp.message) || 'неизвестно'), 'err');
             }

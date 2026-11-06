@@ -1935,6 +1935,41 @@ def universal_menu_view(page_type, item_id):
     )
 
 
+@app.route("/menu/edit/<page_type>/<int:item_id>")
+def universal_menu_edit(page_type, item_id):
+    if "admin_id" not in session:
+        abort(403)
+
+    models = {
+        'staff': 'staff_menu_items',
+        'abiturient': 'abiturient_menu_items',
+        'parents': 'parents_menu_items',
+        'students': 'students_menu_items',
+        'home': 'left_menu_items'
+    }
+
+    table = models.get(page_type)
+    if not table:
+        abort(404)
+
+    conn = get_db()
+    item = conn.execute(
+        f"SELECT id, letter, text FROM {table} WHERE id = ?", (item_id,)
+    ).fetchone()
+    conn.close()
+
+    if not item:
+        abort(404)
+
+    return render_template(
+        'left_menu_view.html',
+        item_id=item['id'],
+        item_title=item['letter'],
+        item_html=item['text'] or '',
+        mode='edit',
+        page_type=page_type
+    )
+
 @app.route("/left_menu/view/<int:item_id>")
 def left_menu_view(item_id):
     conn = get_db()
