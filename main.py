@@ -1970,6 +1970,33 @@ def universal_menu_edit(page_type, item_id):
         page_type=page_type
     )
 
+@app.route("/menu/new/<page_type>")
+def universal_menu_new(page_type):
+    if "admin_id" not in session:
+        abort(403)
+
+    models = {
+        'staff': 'staff_menu_items',
+        'abiturient': 'abiturient_menu_items',
+        'parents': 'parents_menu_items',
+        'students': 'students_menu_items',
+        'home': 'left_menu_items'
+    }
+
+    if page_type not in models:
+        abort(404)
+
+    title = request.args.get("title", "").strip() or "Новый пункт"
+
+    return render_template(
+        'left_menu_view.html',
+        item_id=0,
+        item_title=title,
+        item_html='',
+        mode='new',
+        page_type=page_type
+    )
+
 @app.route("/left_menu/view/<int:item_id>")
 def left_menu_view(item_id):
     conn = get_db()
