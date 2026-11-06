@@ -441,12 +441,11 @@ function initEditorChoiceHandlers() {
             if (!name) return;
 
             if (editorChoiceMode === 'new') {
-                var initialHtml = '';
-                if (editorChoiceEditId) {
-                    initialHtml = htmlInput ? htmlInput.value : '';
-                }
+                var menuEl = document.querySelector('.side-menu[data-page-type]');
+                var pageType = menuEl ? menuEl.dataset.pageType : 'home';
+                var url = '/menu/new/' + pageType + '?title=' + encodeURIComponent(name);
+                window.open(url, '_blank');
                 closeEditorChoiceModal();
-                openNewEditor(name, initialHtml);
             } else if (editorChoiceMode === 'html' || editorChoiceMode === 'edit') {
                 var link = linkInput ? linkInput.value.trim() : '';
                 var htmlVal = htmlInput ? htmlInput.value.trim() : '';
