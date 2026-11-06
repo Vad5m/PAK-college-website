@@ -1926,14 +1926,12 @@ def universal_menu_view(page_type, item_id):
     if not item:
         abort(404)
 
-    is_admin = session.get("admin_id") is not None
-
     return render_template(
         'left_menu_view.html',
         item_id=item['id'],
         item_title=item['letter'],
-        item_html=item['text'] or '',
-        mode='edit' if is_admin else 'view'
+        item_html=item['text'] or '<p><em>Нет содержимого</em></p>',
+        mode='view'
     )
 
 
