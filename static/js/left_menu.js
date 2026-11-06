@@ -107,7 +107,9 @@ async function handleMenuDelete(e) {
 async function handleMenuEdit(e) {
     e.stopPropagation();
     var id = e.currentTarget.dataset.id;
-    window.open('/left_menu/edit/' + id, '_blank');
+    var menuEl = document.querySelector('.side-menu[data-page-type]');
+    var pageType = menuEl ? menuEl.dataset.pageType : 'home';
+    window.open('/menu/edit/' + pageType + '/' + id, '_blank');
 }
 
 function syncMobilePanels() {
