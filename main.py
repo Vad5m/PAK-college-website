@@ -1,6 +1,8 @@
 import hashlib
 import os
 import sqlite3
+import uuid
+import json
 from datetime import datetime
 from collections import deque
 import threading
@@ -21,6 +23,7 @@ from flask import (
     send_from_directory,
     session,
     url_for,
+    abort,
 )
 
 load_dotenv()
@@ -51,6 +54,15 @@ DEFAULT_ADMIN_LEVEL = int(os.getenv("DEFAULT_ADMIN_LEVEL"))
 HOST = os.getenv("HOST")
 PORT = int(os.getenv("PORT"))
 DEBUG = os.getenv("DEBUG").lower() in ("true", "1", "yes")
+
+EDITOR_UPLOAD_FOLDER = os.path.join("data", "upload")
+EDITOR_DOCS_FOLDER = os.path.join("data", "docs")
+os.makedirs(EDITOR_UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(EDITOR_DOCS_FOLDER, exist_ok=True)
+app.config["EDITOR_UPLOAD_FOLDER"] = EDITOR_UPLOAD_FOLDER
+app.config["EDITOR_DOCS_FOLDER"] = EDITOR_DOCS_FOLDER
+app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024
+EDITOR_DOC_NAME = "document"
 
 
 def get_stats_db():
@@ -597,6 +609,16 @@ def wp_content_uploads(filename):
 @app.route("/uploads/<path:filename>")
 def uploads_files(filename):
     return send_from_directory("static/uploads", filename)
+
+
+@app.route("/data/upload/<path:filename>")
+def editor_uploaded_file(filename):
+    return send_from_directory(app.config["EDITOR_UPLOAD_FOLDER"], filename)
+
+
+@app.route('/data/<path:filename>')
+def editor_data_file(filename):
+    return send_from_directory('data', filename)
 
 
 @app.route("/api/admins")
@@ -1881,6 +1903,76 @@ def reorder_left_menu():
         return jsonify({"success": False, "message": str(e)})
 
 
+@app.route("/menu/view/<page_type>/<int:item_id>")
+def universal_menu_view(page_type, item_id):
+    models = {
+        'staff': 'staff_menu_items',
+        'abiturient': 'abiturient_menu_items',
+        'parents': 'parents_menu_items',
+        'students': 'students_menu_items',
+        'home': 'left_menu_items'
+    }
+
+    table = models.get(page_type)
+    if not table:
+        abort(404)
+
+    conn = get_db()
+    item = conn.execute(
+        f"SELECT id, letter, text FROM {table} WHERE id = ?", (item_id,)
+    ).fetchone()
+    conn.close()
+
+    if not item:
+        abort(404)
+
+    is_admin = session.get("admin_id") is not None
+
+    return render_template(
+        'left_menu_view.html',
+        item_id=item['id'],
+        item_title=item['letter'],
+        item_html=item['text'] or '',
+        mode='edit' if is_admin else 'view'
+    )
+
+
+@app.route("/left_menu/view/<int:item_id>")
+def left_menu_view(item_id):
+    conn = get_db()
+    item = conn.execute(
+        "SELECT id, letter, text FROM left_menu_items WHERE id = ?", (item_id,)
+    ).fetchone()
+    conn.close()
+    if not item:
+        return "404", 404
+    return render_template(
+        'left_menu_view.html',
+        item_id=item['id'],
+        item_title=item['letter'],
+        item_html=item['text'] or '',
+        mode='view'
+    )
+
+
+@app.route("/left_menu/edit/<int:item_id>")
+def left_menu_edit(item_id):
+    conn = get_db()
+    item = conn.execute(
+        "SELECT id, letter, text FROM left_menu_items WHERE id = ?", (item_id,)
+    ).fetchone()
+    conn.close()
+    if not item:
+        return "404", 404
+    return render_template(
+        'left_menu_view.html',
+        item_id=item['id'],
+        item_title=item['letter'],
+        item_html=item['text'] or '',
+        mode='edit'
+    )
+
+
 @app.route("/login", methods=["POST"])
 def login_post():
     data = request.get_json()
@@ -2053,7 +2145,8 @@ def home():
         active_tab="home",
         news=news,
         right_ads=right_ads,
-        is_admin=session.get("admin_id") is not None
+        is_admin=session.get("admin_id") is not None,
+        page_type="home"
     )
 
 
@@ -2085,22 +2178,71 @@ def home_page():
 
 @app.route("/abiturient")
 def abiturient():
-    return render_template("abiturient.html", active_tab="abiturient")
+    return render_template("abiturient.html", active_tab="abiturient", page_type="abiturient")
 
 
 @app.route("/students")
 def students():
-    return render_template("students.html", active_tab="students")
+    return render_template("students.html", active_tab="students", page_type="students")
 
 
 @app.route("/parents")
 def parents():
-    return render_template("parents.html", active_tab="parents")
+    return render_template("parents.html", active_tab="parents", page_type="parents")
+
+
+@app.route('/text_redactor')
+def text_redactor():
+    return render_template('text_redactor.html')
+
+
+@app.route('/upload', methods=['POST'])
+def editor_upload():
+    if 'file' not in request.files:
+        return jsonify({'error': 'no file'}), 400
+    f = request.files['file']
+    if not f.filename:
+        return jsonify({'error': 'empty filename'}), 400
+
+    original = secure_filename(f.filename)
+    ext = os.path.splitext(original)[1].lower()
+    unique = uuid.uuid4().hex + ext
+    save_path = os.path.join(app.config["EDITOR_UPLOAD_FOLDER"], unique)
+    f.save(save_path)
+
+    return jsonify({
+        'url': '/data/upload/' + unique,
+        'name': f.filename,
+        'size': os.path.getsize(save_path),
+        'type': f.mimetype
+    })
+
+
+@app.route('/api/document', methods=['GET'])
+def get_editor_document():
+    path = os.path.join(app.config["EDITOR_DOCS_FOLDER"], EDITOR_DOC_NAME + '.vd5')
+    if not os.path.exists(path):
+        return jsonify({'format': 'vd5', 'version': 1, 'content': ''})
+    with open(path, 'r', encoding='utf-8') as f:
+        return jsonify(json.load(f))
+
+
+@app.route('/api/document', methods=['POST'])
+def save_editor_document():
+    data = request.get_json(silent=True)
+    if not data or not isinstance(data.get('content'), str):
+        return jsonify({'error': 'invalid payload'}), 400
+    path = os.path.join(app.config["EDITOR_DOCS_FOLDER"], EDITOR_DOC_NAME + '.vd5')
+    tmp = path + '.tmp'
+    with open(tmp, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False)
+    os.replace(tmp, path)
+    return jsonify({'ok': True})
 
 
 @app.route("/staff")
 def staff():
-    return render_template("staff.html", active_tab="staff")
+    return render_template("staff.html", active_tab="staff", page_type="staff")
 
 
 @app.route("/about")
@@ -2116,6 +2258,11 @@ def login_page():
 @app.route("/contacts")
 def contacts():
     return render_template("contacts.html", active_tab="contacts")
+
+
+@app.route("/preview")
+def preview():
+    return render_template("preview.html")
 
 
 @app.route("/calendar")
