@@ -80,7 +80,7 @@ body { display: flex; flex-direction: column; background: #f8fafc; }
 <div class="page-header">
     <h1>{{ item_title }}</h1>
     <div class="page-header-actions">
-        {% if mode == 'edit' %}
+        {% if mode == 'edit' or mode == 'new' %}
         <button class="btn-save" id="saveBtn">Сохранить</button>
         {% endif %}
         <button class="btn-close" id="closeBtn">Закрыть</button>
@@ -101,10 +101,10 @@ body { display: flex; flex-direction: column; background: #f8fafc; }
 
 <div class="save-status" id="saveStatus"></div>
 
-{% if mode == 'edit' %}
+{% if mode == 'edit' or mode == 'new' %}
 <script>
 var MODE = "{{ mode }}";
-var ITEM_ID = {{ item_id }};
+var ITEM_ID = {{ item_id|default(0) }};
 var ITEM_TITLE = {{ item_title|tojson }};
 var ITEM_HTML = {{ item_html|tojson }};
 var PAGE_TYPE = "{{ page_type|default('home') }}";
@@ -121,6 +121,14 @@ var updateUrls = {
     'students': '/admin/update_students_menu/'
 };
 
+var addUrls = {
+    'home': '/admin/add_left_menu',
+    'staff': '/admin/add_staff_menu',
+    'abiturient': '/admin/add_abiturient_menu',
+    'parents': '/admin/add_parents_menu',
+    'students': '/admin/add_students_menu'
+};
+
 function showStatus(text, cls) {
     saveStatus.textContent = text;
     saveStatus.className = 'save-status show ' + (cls || '');
@@ -133,7 +141,11 @@ frame.onload = function() {
             var win = frame.contentWindow;
             if (win.VD5Editor) {
                 win.VD5Editor.setEditing(true);
-                win.postMessage({ type: 'setContent', html: ITEM_HTML }, '*');
+                if (ITEM_HTML && ITEM_HTML.trim()) {
+                    win.postMessage({ type: 'setContent', html: ITEM_HTML }, '*');
+                } else {
+                    win.postMessage({ type: 'clearContent' }, '*');
+                }
             }
         } catch (e) { console.error(e); }
     }, 300);
@@ -150,18 +162,31 @@ if (saveBtn) {
             showStatus('Пусто — нечего сохранять', 'err');
             return;
         }
-        var updateUrl = updateUrls[PAGE_TYPE] || updateUrls['home'];
+
+        var url, payload;
+        if (MODE === 'new') {
+            url = addUrls[PAGE_TYPE] || addUrls['home'];
+            payload = { letter: ITEM_TITLE, text: html, link: '' };
+        } else {
+            url = (updateUrls[PAGE_TYPE] || updateUrls['home']) + ITEM_ID;
+            payload = { letter: ITEM_TITLE, text: html, link: '' };
+        }
+
         saveBtn.disabled = true;
-        fetch(updateUrl + ITEM_ID, {
+        fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ letter: ITEM_TITLE, text: html, link: '' })
+            body: JSON.stringify(payload)
         })
         .then(function(r) { return r.json(); })
         .then(function(resp) {
             if (resp && resp.success) {
                 ITEM_HTML = html;
                 showStatus('Сохранено', 'ok');
+                if (MODE === 'new' && resp.item && resp.item.id) {
+                    ITEM_ID = resp.item.id;
+                    MODE = 'edit';
+                }
                 if (window.opener && !window.opener.closed && typeof window.opener.refreshLeftMenu === 'function') {
                     try { window.opener.refreshLeftMenu(); } catch (e) {}
                 }
