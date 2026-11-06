@@ -17,7 +17,6 @@ function showToast(msg) {
 
 function escapeHtml(str) { if (!str) return ""; return str.replace(/[&<>]/g, function(m) { return { '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]; }); }
 
-// ===== КНОПКА ПОДЕЛИТЬСЯ =====
 function attachShareHandlers() {
     document.querySelectorAll('.share-overlay-btn').forEach(function(btn) {
         btn.removeEventListener('click', shareHandler);
@@ -57,7 +56,6 @@ function fallbackCopy(text) {
     document.body.removeChild(textarea);
 }
 
-// ===== ПОСТРОЕНИЕ КОЛЛАЖА =====
 function buildMediaCollage(mediaUrls, title, newsId) {
     if (!mediaUrls || mediaUrls.length === 0) {
         return '<div class="news-title">' + escapeHtml(title) + '</div>';
@@ -69,15 +67,8 @@ function buildMediaCollage(mediaUrls, title, newsId) {
                     count === 4 ? 'count-4' :
                     'count-many';
 
-    var shareBtn = `
-        <button class="share-overlay-btn" data-id="${newsId}" data-title="${escapeHtml(title).replace(/"/g, '&quot;')}" title="Поделиться">
-            <svg viewBox="0 0 24 24">
-                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-                <polyline points="16 6 12 2 8 6"/>
-                <line x1="12" y1="2" x2="12" y2="15"/>
-            </svg>
-        </button>
-    `;
+    var shareBtn = '<button class="share-overlay-btn" data-id="' + newsId + '" data-title="' + escapeHtml(title).replace(/"/g, '&quot;') + '" title="Поделиться">' +
+        '<svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button>';
 
     var html = '<div class="gallery-with-title">' + shareBtn + '<div class="news-media-grid ' + countClass + '">';
     var mainUrl = mediaUrls[0];
@@ -149,7 +140,6 @@ function appendNewsItems(items) {
     attachShareHandlers();
 }
 
-// ===== УДАЛЕНИЕ НОВОСТИ =====
 function attachDeleteHandlers() {
     document.querySelectorAll(".delete-news-btn").forEach(function(btn) {
         btn.removeEventListener("click", handleDeleteClick);
@@ -176,7 +166,6 @@ async function handleDeleteClick(e) {
     } else alert("Ошибка: " + data.message);
 }
 
-// ===== РЕДАКТИРОВАНИЕ НОВОСТИ =====
 function attachEditHandlers() {
     document.querySelectorAll(".edit-news-btn").forEach(function(btn) {
         btn.removeEventListener("click", handleEditClick);
@@ -319,11 +308,9 @@ function readMoreHandler(e) {
     }
 }
 
-// ===== ПРОМО-БЛОКИ =====
 if (document.getElementById("addPromoBtn")) {
     var selectedPromoFile = null;
 
-    // Переключение между типами контента
     document.querySelectorAll('input[name="promoContentType"]').forEach(function(radio) {
         radio.addEventListener('change', function() {
             var isImage = this.value === 'image';
@@ -408,8 +395,6 @@ if (document.getElementById("addPromoBtn")) {
         var link = document.getElementById("promoLink").value.trim();
         var formData = new FormData();
 
-        console.log('Выбран тип:', contentType);
-
         if (contentType === 'image') {
             if (!selectedPromoFile) {
                 alert("Выберите изображение или видео");
@@ -436,7 +421,6 @@ if (document.getElementById("addPromoBtn")) {
         try {
             var res = await fetch("/admin/add_right_ad", { method: "POST", body: formData });
             var data = await res.json();
-            console.log('Ответ сервера:', data);
             if (data.success) {
                 var container = document.getElementById("promoContainer");
                 if (!container) return;
@@ -488,7 +472,6 @@ if (document.getElementById("addPromoBtn")) {
     };
 }
 
-// ===== ОСТАЛЬНЫЕ ФУНКЦИИ =====
 function attachPromoDeleteHandlers() {
     document.querySelectorAll(".delete-promo-btn").forEach(function(btn) {
         btn.removeEventListener("click", handlePromoDelete);
@@ -652,135 +635,6 @@ function prevMedia() {
     }
 }
 
-// ===== ЛЕВОЕ МЕНЮ =====
-async function showMenuText(itemId, title) {
-    try {
-        var res = await fetch("/api/left_menu_text/" + itemId);
-        var data = await res.json();
-        if (data.success) {
-            var titleEl = document.getElementById("textViewTitle");
-            var contentEl = document.getElementById("textViewContent");
-            if (titleEl) titleEl.textContent = data.title;
-            if (contentEl) contentEl.innerHTML = data.text || "<p><em>Нет содержимого</em></p>";
-            showModal("textViewModal");
-        } else {
-            alert("Ошибка загрузки текста");
-        }
-    } catch (err) {
-        console.error(err);
-        alert("Ошибка загрузки");
-    }
-}
-
-var sortableInstance = null;
-async function refreshLeftMenu() {
-    var res = await fetch('/api/left_menu_items');
-    if (!res.ok) return;
-    var items = await res.json();
-    var container = document.getElementById('leftMenuContainer');
-    if (!container) return;
-    if (items.length === 0) {
-        container.innerHTML = '<div class="empty-menu">Пусто</div>';
-        if (sortableInstance) sortableInstance.destroy();
-        sortableInstance = null;
-    } else {
-        var html = '';
-        for (var i = 0; i < items.length; i++) {
-            var item = items[i];
-            if (item.link && item.link.trim()) {
-                var href = item.link.trim();
-                html += '<div class="menu-item" data-id="' + item.id + '" data-has-link="true">' +
-                        '<a href="' + escapeHtml(href) + '" class="menu-link" ' + (href.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : '') + '>' + escapeHtml(item.letter) + '</a>' +
-                        (window.isAdmin ? '<div class="menu-actions"><button class="edit-menu-btn" data-id="' + item.id + '" title="Редактировать">✎</button><button class="delete-menu-btn" data-id="' + item.id + '" title="Удалить">✖</button></div>' : '') +
-                        '</div>';
-            } else {
-                html += '<div class="menu-item" data-id="' + item.id + '" data-has-link="false">' +
-                        '<span class="menu-link" style="cursor:pointer;">' + escapeHtml(item.letter) + '</span>' +
-                        (window.isAdmin ? '<div class="menu-actions"><button class="edit-menu-btn" data-id="' + item.id + '" title="Редактировать">✎</button><button class="delete-menu-btn" data-id="' + item.id + '" title="Удалить">✖</button></div>' : '') +
-                        '</div>';
-            }
-        }
-        container.innerHTML = html;
-        document.querySelectorAll('#leftMenuContainer .menu-item').forEach(function(el) {
-            var hasLink = el.dataset.hasLink === 'true';
-            if (!hasLink) {
-                var span = el.querySelector('.menu-link');
-                var itemId = el.dataset.id;
-                var title = span ? span.textContent : '';
-                span.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    showMenuText(itemId, title);
-                });
-            }
-        });
-        if (window.isAdmin) {
-            document.querySelectorAll('#leftMenuContainer .menu-item').forEach(function(el) {
-                el.classList.add('draggable');
-            });
-            if (sortableInstance) sortableInstance.destroy();
-            sortableInstance = new Sortable(container, {
-                animation: 200,
-                handle: '.menu-item',
-                onEnd: async function() {
-                    var ids = Array.from(document.querySelectorAll('#leftMenuContainer .menu-item')).map(function(el) { return parseInt(el.dataset.id); });
-                    if (ids.length) {
-                        await fetch('/admin/reorder_left_menu', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ ids: ids })
-                        });
-                        syncMobilePanels();
-                    }
-                }
-            });
-        } else if (sortableInstance) { sortableInstance.destroy(); sortableInstance = null; }
-    }
-    document.querySelectorAll('.delete-menu-btn').forEach(function(btn) {
-        btn.removeEventListener('click', handleMenuDelete);
-        btn.addEventListener('click', handleMenuDelete);
-    });
-    document.querySelectorAll('.edit-menu-btn').forEach(function(btn) {
-        btn.removeEventListener('click', handleMenuEdit);
-        btn.addEventListener('click', handleMenuEdit);
-    });
-    syncMobilePanels();
-}
-
-async function handleMenuDelete(e) {
-    e.stopPropagation();
-    var id = e.currentTarget.dataset.id;
-    if (!confirm("Удалить пункт?")) return;
-    var res = await fetch("/admin/delete_left_menu/" + id, { method: 'POST' });
-    var data = await res.json();
-    if (data.success) refreshLeftMenu();
-    else alert("Ошибка: " + data.message);
-}
-
-async function handleMenuEdit(e) {
-    e.stopPropagation();
-    var id = e.currentTarget.dataset.id;
-    try {
-        var res = await fetch("/api/left_menu_text/" + id);
-        var data = await res.json();
-        if (data.success) {
-            document.getElementById("editMenuId").value = id;
-            document.getElementById("editMenuLetter").value = data.title || "";
-            document.getElementById("editMenuText").value = data.text || "";
-            var itemsRes = await fetch('/api/left_menu_items');
-            var items = await itemsRes.json();
-            var item = items.find(function(i) { return i.id == id; });
-            if (item) {
-                document.getElementById("editMenuLink").value = item.link || "";
-            }
-            showModal("editLeftMenuModal");
-        }
-    } catch (err) {
-        console.error(err);
-        alert("Ошибка загрузки данных для редактирования");
-    }
-}
-
-// ===== НОВОСТИ (добавление/редактирование) =====
 if (document.getElementById("addNewsBtn")) {
     var selectedNewsFiles = [];
     var STORAGE_KEY = "news_draft";
@@ -949,89 +803,7 @@ if (document.getElementById("addNewsBtn")) {
     };
 }
 
-// ===== СИНХРОНИЗАЦИЯ МОБИЛЬНЫХ ПАНЕЛЕЙ =====
-function syncMobilePanels() {
-    var leftOriginal = document.querySelector('.side-menu');
-    var leftContainer = document.getElementById('mobileLeftMenuContainer');
-    if (leftOriginal && leftContainer) {
-        var clone = leftOriginal.cloneNode(true);
-        clone.removeAttribute('id');
-        leftContainer.innerHTML = '';
-        leftContainer.appendChild(clone);
-        var addMenuBtnInPanel = leftContainer.querySelector('.add-menu-btn');
-        if (addMenuBtnInPanel) {
-            addMenuBtnInPanel.removeEventListener('click', addMenuHandler);
-            addMenuBtnInPanel.addEventListener('click', addMenuHandler);
-        }
-        leftContainer.querySelectorAll('.delete-menu-btn').forEach(function(btn) {
-            btn.removeEventListener('click', handleMenuDelete);
-            btn.addEventListener('click', handleMenuDelete);
-        });
-        leftContainer.querySelectorAll('.edit-menu-btn').forEach(function(btn) {
-            btn.removeEventListener('click', handleMenuEdit);
-            btn.addEventListener('click', handleMenuEdit);
-        });
-        leftContainer.querySelectorAll('.menu-item').forEach(function(el) {
-            var hasLink = el.dataset.hasLink === 'true';
-            if (!hasLink) {
-                var span = el.querySelector('.menu-link');
-                var itemId = el.dataset.id;
-                var title = span ? span.textContent : '';
-                span.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    showMenuText(itemId, title);
-                });
-            }
-        });
-    }
-    var rightOriginal = document.querySelector('.extra-info-section');
-    var rightContainer = document.getElementById('mobileRightContent');
-    if (rightOriginal && rightContainer) {
-        var clone2 = rightOriginal.cloneNode(true);
-        clone2.removeAttribute('id');
-        rightContainer.innerHTML = '';
-        rightContainer.appendChild(clone2);
-        var addPromoBtnInPanel = rightContainer.querySelector('.add-info-header-btn');
-        if (addPromoBtnInPanel) {
-            addPromoBtnInPanel.removeEventListener('click', addPromoHandler);
-            addPromoBtnInPanel.addEventListener('click', addPromoHandler);
-        }
-        rightContainer.querySelectorAll('.delete-promo-btn').forEach(function(btn) {
-            btn.removeEventListener('click', handlePromoDelete);
-            btn.addEventListener('click', handlePromoDelete);
-        });
-    }
-}
-
-function addMenuHandler() { showModal("leftMenuModal"); }
-function addPromoHandler() { showModal("promoModal"); }
-
-var currentOpenPanel = null;
-function openPanel(panelId) {
-    closePanel();
-    var panel = document.getElementById(panelId);
-    var overlay = document.getElementById('panelOverlay');
-    if (panel) {
-        panel.classList.add('open');
-        if (overlay) overlay.style.display = 'block';
-        currentOpenPanel = panelId;
-        syncMobilePanels();
-    }
-}
-function closePanel() {
-    var overlay = document.getElementById('panelOverlay');
-    if (currentOpenPanel) {
-        var panel = document.getElementById(currentOpenPanel);
-        if (panel) panel.classList.remove('open');
-        currentOpenPanel = null;
-    }
-    if (overlay) overlay.style.display = 'none';
-}
-
-// ===== ИНИЦИАЛИЗАЦИЯ =====
 document.addEventListener('DOMContentLoaded', function() {
-    // window.isAdmin уже установлен в home.html
-
     document.querySelectorAll(".close").forEach(function(btn) { btn.onclick = hideModals; });
     window.onclick = function(e) { if (e.target.classList.contains("modal")) hideModals(); };
 
@@ -1043,71 +815,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    var addLeftBtn = document.getElementById("addLeftMenuBtn");
-    if (addLeftBtn) {
-        addLeftBtn.addEventListener("click", function() { showModal("leftMenuModal"); });
-    }
-
-    var submitLeft = document.getElementById("submitLeftMenu");
-    if (submitLeft) {
-        submitLeft.addEventListener("click", async function() {
-            var letter = document.getElementById("menuLetter").value.trim();
-            var text = document.getElementById("menuText").value;
-            var link = document.getElementById("menuLink").value.trim();
-            if (!letter) return alert("Заполните название");
-            if (link && !link.startsWith('http://') && !link.startsWith('https://') && !link.startsWith('/') && !link.startsWith('#')) {
-                link = '/' + link;
-            }
-            var res = await fetch("/admin/add_left_menu", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ letter: letter, text: text, link: link })
-            });
-            var data = await res.json();
-            if (data.success) {
-                hideModals();
-                document.getElementById("menuLetter").value = "";
-                document.getElementById("menuText").value = "";
-                document.getElementById("menuLink").value = "";
-                refreshLeftMenu();
-            } else alert("Ошибка: " + data.message);
-        });
-    }
-
-    var submitEdit = document.getElementById("submitEditMenu");
-    if (submitEdit) {
-        submitEdit.addEventListener("click", async function() {
-            var id = document.getElementById("editMenuId").value;
-            var letter = document.getElementById("editMenuLetter").value.trim();
-            var text = document.getElementById("editMenuText").value;
-            var link = document.getElementById("editMenuLink").value.trim();
-            if (!letter) return alert("Заполните название");
-            if (link && !link.startsWith('http://') && !link.startsWith('https://') && !link.startsWith('/') && !link.startsWith('#')) {
-                link = '/' + link;
-            }
-            var res = await fetch("/admin/update_left_menu/" + id, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ letter: letter, text: text, link: link })
-            });
-            var data = await res.json();
-            if (data.success) {
-                hideModals();
-                refreshLeftMenu();
-            } else alert("Ошибка: " + data.message);
-        });
-    }
-
-    // Mobile bottom buttons
-    var mobileLeft = document.getElementById('mobileLeftBtn');
-    if (mobileLeft) mobileLeft.addEventListener('click', function() { openPanel('mobileLeftPanel'); });
     var mobileRight = document.getElementById('mobileRightBtn');
     if (mobileRight) mobileRight.addEventListener('click', function() { openPanel('mobileRightPanel'); });
-    var panelOverlay = document.getElementById('panelOverlay');
-    if (panelOverlay) panelOverlay.addEventListener('click', closePanel);
-    document.querySelectorAll('.close-panel-btn').forEach(function(btn) {
-        btn.addEventListener('click', function(e) { closePanel(); });
-    });
 
     var lightboxClose = document.querySelector(".lightbox-close");
     if (lightboxClose) lightboxClose.onclick = closeLightbox;
@@ -1120,7 +829,6 @@ document.addEventListener('DOMContentLoaded', function() {
         lightbox.addEventListener("wheel", function(e) { if (e.target.closest(".lightbox-content img")) e.preventDefault(); }, { passive: false });
     }
 
-    refreshLeftMenu();
     attachPromoDeleteHandlers();
     initPromosSortable();
     loadNews(0);
