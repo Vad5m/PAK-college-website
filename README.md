@@ -14,9 +14,9 @@
 ⢫⠾⠿⢋⢾⣰⣿⣣⣖⡱⣼⡿⡜⠀⢸⣿⣿⢫⣾⣿⣿⠟⢛⣸⣿⣿⣿⣿ 
 </pre>
 
-Notice: This repository is for viewing purposes only. You are not allowed to copy, distribute, modify, or use this code without explicit written permission from the author.
-
-Уведомление: Этот репозиторий предназначен только для просмотра. Вам запрещено копировать, распространять, модифицировать или использовать этот код без прямого письменного разрешения автора.
+> [!NOTE]
+> Notice: This repository is for viewing purposes only. You are not allowed to copy, distribute, modify, or use this code without explicit written permission from the author.
+> Уведомление: Этот репозиторий предназначен только для просмотра. Вам запрещено копировать, распространять, модифицировать или использовать этот код без прямого письменного разрешения автора.
 
 
 <img width="1920" height="1200" alt="изображение" src="https://github.com/user-attachments/assets/8839bbf1-0cde-46d4-8c58-9483a0c8d9db" />
