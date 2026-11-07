@@ -3,67 +3,146 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Админ-панель</title>
+    <title>Админ-панель · Панель управления</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
 </head>
 <body>
+    <div class="fx-bg">
+        <div class="fx-grid"></div>
+        <div class="fx-noise"></div>
+        <div class="fx-orb fx-orb-1"></div>
+        <div class="fx-orb fx-orb-2"></div>
+        <div class="fx-orb fx-orb-3"></div>
+        <div class="fx-orb fx-orb-4"></div>
+        <div class="fx-beam fx-beam-1"></div>
+        <div class="fx-beam fx-beam-2"></div>
+    </div>
+
     <header class="admin-header">
         <div class="header-left">
             <div class="title-group">
-                <h1><i style="margin-right:8px;color:#7aa9ff;"></i>Админ-панель</h1>
-                <p>Управление администраторами · Статистика</p>
+                <h1>Админ-панель</h1>
             </div>
-            <a href="/" class="btn-header btn-home-header"><i class="bi bi-house"></i> На главную</a>
         </div>
+        <nav class="header-nav">
+            <a href="/" class="nav-link"><i class="bi bi-house-door"></i><span>Главная</span></a>
+        </nav>
         <div class="header-right">
             <div class="user-block">
-                <i class="bi bi-person-circle"></i>
-                <span>{{ username }}</span>
-                <span class="level-badge">Уровень {{ user_level }}</span>
+                <div class="user-avatar-wrap">
+                    <div class="user-avatar">{{ username[0]|upper }}</div>
+                    <div class="user-avatar-ring"></div>
+                </div>
+                <div class="user-meta">
+                    <span class="user-name">{{ username }}</span>
+                    <span class="user-role">Уровень {{ user_level }}</span>
+                </div>
             </div>
-            <a href="/logout" class="btn-header btn-logout-header"><i class="bi bi-box-arrow-right"></i> Выйти</a>
+            <a href="/logout" class="btn-icon-logout" title="Выйти">
+                <i class="bi bi-box-arrow-right"></i>
+                <span class="btn-hover-glow"></span>
+            </a>
         </div>
     </header>
 
     <div class="main-wrapper">
         <aside class="sidebar" id="sidebar">
-            <div class="sidebar-title">
-                <i class="bi bi-people-fill"></i> Администраторы
+            <div class="sidebar-head">
+                <div class="sidebar-title">
+                    <span class="title-icon"><i class="bi bi-people-fill"></i></span>
+                    <span>Администраторы</span>
+                </div>
                 <span class="badge-count" id="admins-count">0</span>
             </div>
             <div class="admin-list-wrap">
                 <ul class="admin-list" id="admin-list"></ul>
             </div>
+            <div class="sidebar-footer">
+                <div class="status-line">
+                    <span>Система онлайн</span>
+                    <span class="status-time" id="live-clock">--:--:--</span>
+                </div>
+            </div>
         </aside>
 
-        <div class="content-area">
-            <div class="stats-section">
-                <h2><i class="bi bi-graph-up-arrow"></i> Статистика сайта</h2>
+        <main class="content-area">
+            <section class="stats-section">
+                <div class="section-head">
+                    <div>
+                        <h2><i class="bi bi-activity"></i> Статистика сайта</h2>
+                        <p class="section-sub">Обзор трафика, источников и поведения посетителей</p>
+                    </div>
+                </div>
 
                 <div class="cards">
-                    <div class="card-stat"><div class="num">{{ stats.visits_total }}</div><div class="label">Всего визитов</div><div class="icon-bg"><i class="bi bi-eye"></i></div></div>
-                    <div class="card-stat"><div class="num">{{ unique_ips }}</div><div class="label">Уникальных посетителей</div><div class="icon-bg"><i class="bi bi-people"></i></div></div>
-                    <div class="card-stat"><div class="num">{{ stats.page_views|length }}</div><div class="label">Уникальных страниц</div><div class="icon-bg"><i class="bi bi-files"></i></div></div>
-                    <div class="card-stat"><div class="num">{{ stats.browsers|length }}</div><div class="label">Типов браузеров</div><div class="icon-bg"><i class="bi bi-browser-chrome"></i></div></div>
+                    <div class="card-stat">
+                        <div class="card-spotlight"></div>
+                        <div class="card-glow"></div>
+                        <div class="card-top">
+                            <span class="stat-icon"><i class="bi bi-eye"></i></span>
+                        </div>
+                        <div class="num">{{ stats.visits_total }}</div>
+                        <div class="label">Всего визитов</div>
+                        <div class="card-bar"><span></span></div>
+                    </div>
+                    <div class="card-stat">
+                        <div class="card-spotlight"></div>
+                        <div class="card-glow glow-violet"></div>
+                        <div class="card-top">
+                            <span class="stat-icon icon-violet"><i class="bi bi-people"></i></span>
+                        </div>
+                        <div class="num">{{ unique_ips }}</div>
+                        <div class="label">Уникальных</div>
+                        <div class="card-bar bar-violet"><span></span></div>
+                    </div>
+                    <div class="card-stat">
+                        <div class="card-spotlight"></div>
+                        <div class="card-glow glow-green"></div>
+                        <div class="card-top">
+                            <span class="stat-icon icon-green"><i class="bi bi-files"></i></span>
+                        </div>
+                        <div class="num">{{ stats.page_views|length }}</div>
+                        <div class="label">Страниц</div>
+                        <div class="card-bar bar-green"><span></span></div>
+                    </div>
+                    <div class="card-stat">
+                        <div class="card-spotlight"></div>
+                        <div class="card-glow glow-amber"></div>
+                        <div class="card-top">
+                            <span class="stat-icon icon-amber"><i class="bi bi-browser-chrome"></i></span>
+                        </div>
+                        <div class="num">{{ stats.browsers|length }}</div>
+                        <div class="label">Браузеров</div>
+                        <div class="card-bar bar-amber"><span></span></div>
+                    </div>
                 </div>
 
                 <div class="charts-row">
                     <div class="chart-box">
-                        <div class="chart-title"><i class="bi bi-bar-chart-fill"></i> Браузеры</div>
-                        <canvas id="browserChart" height="130"></canvas>
+                        <div class="chart-title">
+                            <span class="chart-title-icon"><i class="bi bi-pie-chart-fill"></i></span>
+                            Браузеры
+                        </div>
+                        <div class="chart-holder"><canvas id="browserChart"></canvas></div>
                     </div>
                     <div class="chart-box">
-                        <div class="chart-title"><i class="bi bi-file-earmark-text"></i> Страницы</div>
-                        <canvas id="pagesChart" height="130"></canvas>
+                        <div class="chart-title">
+                            <span class="chart-title-icon"><i class="bi bi-bar-chart-fill"></i></span>
+                            Просмотры страниц
+                        </div>
+                        <div class="chart-holder"><canvas id="pagesChart"></canvas></div>
                     </div>
                 </div>
 
-                <div class="stats-grid">
-                    <div>
-                        <div class="section-title"><i class="bi bi-browser-chrome"></i> Браузеры</div>
+                <div class="bento">
+                    <div class="panel bento-a">
+                        <div class="panel-head"><span class="panel-icon"><i class="bi bi-browser-chrome"></i></span> Браузеры</div>
                         <div class="stats-table-wrap">
                             <table>
                                 {% for browser, count in stats.browsers.items()|sort(attribute='1', reverse=true) %}
@@ -72,8 +151,8 @@
                             </table>
                         </div>
                     </div>
-                    <div>
-                        <div class="section-title"><i class="bi bi-files"></i> Страницы</div>
+                    <div class="panel bento-b">
+                        <div class="panel-head"><span class="panel-icon"><i class="bi bi-files"></i></span> Страницы</div>
                         <div class="stats-table-wrap">
                             <table>
                                 {% for page, count in stats.page_views.items()|sort(attribute='1', reverse=true) %}
@@ -82,9 +161,8 @@
                             </table>
                         </div>
                     </div>
-
-                    <div>
-                        <div class="section-title"><i class="bi bi-display"></i> Экраны</div>
+                    <div class="panel bento-c">
+                        <div class="panel-head"><span class="panel-icon"><i class="bi bi-display"></i></span> Экраны</div>
                         <div class="stats-table-wrap">
                             {% set screens_list = stats.screens.items()|sort(attribute='1', reverse=true)|list %}
                             <table class="table-collapsible" id="screens-table">
@@ -108,20 +186,19 @@
                             {% endif %}
                         </div>
                     </div>
-
-                    <div>
-                        <div class="section-title"><i class="bi bi-link-45deg"></i> Откуда пришли</div>
+                    <div class="panel bento-d">
+                        <div class="panel-head"><span class="panel-icon"><i class="bi bi-link-45deg"></i></span> Источники</div>
                         <div class="stats-table-wrap">
                             {% set referers_list = stats.referers.items()|sort(attribute='1', reverse=true)|list %}
                             <table class="table-collapsible" id="referers-table">
                                 <tbody>
                                     {% for ref, count in referers_list[:10] %}
-                                    <tr><td style="font-size:11px; word-break:break-all;">{{ ref }}</td><td><span class="badge-stat">{{ count }}</span></td></tr>
+                                    <tr><td class="cell-mono">{{ ref }}</td><td><span class="badge-stat">{{ count }}</span></td></tr>
                                     {% endfor %}
                                     {% if referers_list|length > 10 %}
                                     <tbody class="extra-rows">
                                         {% for ref, count in referers_list[10:] %}
-                                        <tr><td style="font-size:11px; word-break:break-all;">{{ ref }}</td><td><span class="badge-stat">{{ count }}</span></td></tr>
+                                        <tr><td class="cell-mono">{{ ref }}</td><td><span class="badge-stat">{{ count }}</span></td></tr>
                                         {% endfor %}
                                     </tbody>
                                     {% endif %}
@@ -136,32 +213,45 @@
                     </div>
                 </div>
 
-                <div style="margin-top:20px;" id="visits-block">
-                    <div class="section-title"><i class="bi bi-clock-history"></i> Все визиты (<span id="visits-total">{{ visits_total }}</span>)</div>
+                <div class="panel panel-full" id="visits-block">
+                    <div class="panel-head">
+                        <span class="panel-icon"><i class="bi bi-clock-history"></i></span>
+                        Все визиты
+                        <span class="panel-counter" id="visits-total">{{ visits_total }}</span>
+                    </div>
                     <div class="stats-table-wrap" id="visits-table-wrap">
-                        <div class="table-loading">Загрузка визитов...</div>
+                        <div class="table-loading"><span class="dot-loader"></span> Загрузка визитов...</div>
                     </div>
                 </div>
 
-                <div style="margin-top:20px;" id="behavior-block">
-                    <div class="section-title"><i class="bi bi-graph-up"></i> Поведение пользователей</div>
+                <div class="panel panel-full" id="behavior-block">
+                    <div class="panel-head">
+                        <span class="panel-icon"><i class="bi bi-graph-up"></i></span>
+                        Поведение пользователей
+                    </div>
                     <div class="stats-table-wrap" id="behavior-table-wrap">
-                        <div class="table-loading">Загрузка данных...</div>
+                        <div class="table-loading"><span class="dot-loader"></span> Загрузка данных...</div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </section>
+        </main>
     </div>
 
     <div class="modal-overlay" id="addModal">
         <div class="modal-content">
-            <h4><i class="bi bi-person-plus"></i> Добавить администратора</h4>
+            <div class="modal-head">
+                <div class="modal-icon"><i class="bi bi-person-plus"></i></div>
+                <div>
+                    <h4>Новый администратор</h4>
+                    <p class="modal-sub">Создание учётной записи с доступом</p>
+                </div>
+            </div>
             <form id="add-admin-form">
                 <div class="mb-3"><label class="form-label">ФИО</label><input type="text" class="form-control" id="admin-fullname" placeholder="Иванов Иван Иванович" required /></div>
                 <div class="mb-3"><label class="form-label">Логин</label><input type="text" class="form-control" id="admin-username" placeholder="ivanov" required /></div>
                 <div class="mb-3"><label class="form-label">Пароль</label><input type="text" class="form-control" id="admin-password" placeholder="Минимум 6 символов" required minlength="6" /></div>
                 <div class="mb-3"><label class="form-label">Уровень доступа</label><select class="form-control" id="admin-level"></select><small class="text-muted">Только ниже вашего уровня</small></div>
-                <div class="d-flex gap-2 justify-content-end">
+                <div class="d-flex gap-2 justify-content-end modal-actions">
                     <button type="button" class="btn-cancel" id="add-cancel-btn">Отмена</button>
                     <button type="submit" class="btn-save" id="add-save-btn"><i class="bi bi-check-circle"></i> Добавить</button>
                 </div>
@@ -171,14 +261,20 @@
 
     <div class="modal-overlay" id="editModal">
         <div class="modal-content">
-            <h4><i class="bi bi-pencil-square"></i> Редактировать</h4>
+            <div class="modal-head">
+                <div class="modal-icon"><i class="bi bi-pencil-square"></i></div>
+                <div>
+                    <h4>Редактирование</h4>
+                    <p class="modal-sub">Изменение данных учётной записи</p>
+                </div>
+            </div>
             <form id="edit-admin-form">
                 <input type="hidden" id="edit-admin-id" />
                 <div class="mb-3"><label class="form-label">ФИО</label><input type="text" class="form-control" id="edit-fullname" required /></div>
                 <div class="mb-3"><label class="form-label">Логин</label><input type="text" class="form-control" id="edit-username" required /></div>
-                <div class="mb-3"><label class="form-label">Новый пароль <span class="text-muted">(оставьте пустым)</span></label><input type="text" class="form-control" id="edit-password" placeholder="Минимум 6 символов" minlength="6" /></div>
+                <div class="mb-3"><label class="form-label">Новый пароль <span class="text-muted">(опционально)</span></label><input type="text" class="form-control" id="edit-password" placeholder="Минимум 6 символов" minlength="6" /></div>
                 <div class="mb-3"><label class="form-label">Уровень доступа</label><select class="form-control" id="edit-level"></select><small class="text-muted" id="edit-level-hint"></small></div>
-                <div class="d-flex gap-2 justify-content-end">
+                <div class="d-flex gap-2 justify-content-end modal-actions">
                     <button type="button" class="btn-cancel" id="edit-cancel-btn">Отмена</button>
                     <button type="submit" class="btn-save" id="edit-save-btn"><i class="bi bi-check-circle"></i> Сохранить</button>
                 </div>
@@ -237,10 +333,10 @@
                 var total = data.total != null ? data.total : visits.length;
                 var totalEl = document.getElementById('visits-total'); if (totalEl) totalEl.textContent = total;
                 fill('visits-table-wrap','visits-table',['Время','IP','Браузер','Страница','Откуда'],
-                    visits.map(function(v){return '<td style="white-space:nowrap;font-size:11px;">'+esc(v.timestamp)+'</td><td style="font-size:11px;">'+esc(v.ip)+'</td><td><span class="badge-stat badge-soft">'+esc(v.browser)+'</span></td><td style="font-size:11px;">'+esc(v.page)+'</td><td style="font-size:10px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(v.referer)+'">'+esc(v.referer)+'</td>';}),'Показать все');
+                    visits.map(function(v){return '<td class="cell-mono">'+esc(v.timestamp)+'</td><td class="cell-mono">'+esc(v.ip)+'</td><td><span class="badge-stat badge-soft">'+esc(v.browser)+'</span></td><td>'+esc(v.page)+'</td><td class="cell-mono cell-ellipsis" title="'+esc(v.referer)+'">'+esc(v.referer)+'</td>';}),'Показать все');
                 if (total > visits.length) {
                     var note = document.createElement('p');
-                    note.style.cssText = 'color:#6f85a5;margin-top:8px;font-size:11px;';
+                    note.style.cssText = 'color:#6b7a99;margin-top:10px;font-size:11px;padding-left:4px;';
                     note.textContent = 'Показано ' + visits.length + ' из ' + total + ' визитов';
                     wrap.appendChild(note);
                 }
@@ -256,9 +352,9 @@
             try {
                 var data = await fetchJson('/api/admin/behavior?limit=50');
                 var clients = data.clients || [];
-                if (!clients.length) { wrap.innerHTML = '<p style="color:#6f85a5;font-size:13px;">Нет данных. Посетите главную страницу.</p>'; return; }
-                fill('behavior-table-wrap','behavior-table',['Время','Страница','Экран','Загрузка','Время на стр.','Клики','Скролл'],
-                    clients.map(function(c){return '<td style="white-space:nowrap;font-size:11px;">'+esc(c.timestamp)+'</td><td style="font-size:11px;">'+esc(c.page)+'</td><td style="font-size:11px;">'+esc(c.screen)+'</td><td style="font-size:11px;">'+esc(c.load_time)+'ms</td><td style="font-size:11px;">'+esc(c.time_on_page)+'с</td><td style="font-size:11px;">'+esc(c.clicks)+'</td><td style="font-size:11px;">'+esc(c.scroll_depth)+'%</td>';}),'Показать все');
+                if (!clients.length) { wrap.innerHTML = '<div class="table-loading">Нет данных. Посетите главную страницу.</div>'; return; }
+                fill('behavior-table-wrap','behavior-table',['Время','Страница','Экран','Загрузка','На стр.','Клики','Скролл'],
+                    clients.map(function(c){return '<td class="cell-mono">'+esc(c.timestamp)+'</td><td>'+esc(c.page)+'</td><td class="cell-mono">'+esc(c.screen)+'</td><td class="cell-mono">'+esc(c.load_time)+'ms</td><td class="cell-mono">'+esc(c.time_on_page)+'с</td><td class="cell-mono">'+esc(c.clicks)+'</td><td><span class="badge-stat badge-soft">'+esc(c.scroll_depth)+'%</span></td>';}),'Показать все');
             } catch (e) {
                 wrap.innerHTML = '<div class="table-loading">Поведение: ' + esc(e.message) + '</div>';
             }
@@ -280,6 +376,25 @@
         document.addEventListener('DOMContentLoaded', function () {
             observeBlock('visits-block', loadVisits);
             observeBlock('behavior-block', loadBehavior);
+
+            var clock = document.getElementById('live-clock');
+            if (clock) {
+                setInterval(function(){
+                    var d = new Date();
+                    clock.textContent = [d.getHours(), d.getMinutes(), d.getSeconds()]
+                        .map(function(n){return String(n).padStart(2,'0');}).join(':');
+                }, 1000);
+            }
+
+            document.querySelectorAll('.card-stat').forEach(function(card, idx){
+                card.style.animationDelay = (idx * 0.08) + 's';
+                card.classList.add('fade-in-up');
+                card.addEventListener('mousemove', function(e){
+                    var r = card.getBoundingClientRect();
+                    card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+                    card.style.setProperty('--my', (e.clientY - r.top) + 'px');
+                });
+            });
         });
     })();
     </script>
