@@ -1,4 +1,17 @@
 function initCharts() {
+    const chartFont = 'Manrope, sans-serif';
+    const tooltipStyle = {
+        backgroundColor: 'rgba(255, 255, 255, 0.98)',
+        titleColor: '#0b1e3a',
+        bodyColor: '#4a5a72',
+        borderColor: 'rgba(11, 30, 58, 0.15)',
+        borderWidth: 1,
+        padding: 12,
+        cornerRadius: 10,
+        titleFont: { family: chartFont, size: 12, weight: '700' },
+        bodyFont: { family: chartFont, size: 11 }
+    };
+
     const browsers = statsData.browsers;
     const browserLabels = Object.keys(browsers).slice(0, 6);
     const browserData = browserLabels.map(k => browsers[k]);
@@ -9,15 +22,33 @@ function initCharts() {
             labels: browserLabels,
             datasets: [{
                 data: browserData,
-                backgroundColor: ['#2a6cf5', '#7c3aed', '#16a34a', '#ca8a04', '#dc2626', '#6b7280'],
-                borderWidth: 2,
-                borderColor: '#fff'
+                backgroundColor: ['#2a6cf5', '#1a3a6b', '#0b1e3a', '#60a5fa', '#93c5fd', '#cbd5e1'],
+                borderWidth: 3,
+                borderColor: '#ffffff',
+                hoverOffset: 10,
+                hoverBorderColor: '#ffffff'
             }]
         },
         options: {
             responsive: true,
-            plugins: { legend: { display: false }, tooltip: { backgroundColor: '#0b1e3a', titleColor: '#fff', bodyColor: '#ddd' } },
-            cutout: '65%'
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'right',
+                    labels: {
+                        color: '#4a5a72',
+                        font: { family: chartFont, size: 11, weight: '600' },
+                        padding: 12,
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        boxWidth: 8,
+                        boxHeight: 8
+                    }
+                },
+                tooltip: tooltipStyle
+            },
+            cutout: '70%'
         }
     });
 
@@ -25,6 +56,9 @@ function initCharts() {
     const pageLabels = Object.keys(pages).slice(0, 6);
     const pageData = pageLabels.map(k => pages[k]);
     const ctxP = document.getElementById('pagesChart').getContext('2d');
+    const gradient = ctxP.createLinearGradient(0, 0, 0, 200);
+    gradient.addColorStop(0, '#2a6cf5');
+    gradient.addColorStop(1, '#93c5fd');
     new Chart(ctxP, {
         type: 'bar',
         data: {
@@ -32,17 +66,30 @@ function initCharts() {
             datasets: [{
                 label: 'Просмотры',
                 data: pageData,
-                backgroundColor: '#2a6cf5',
-                borderRadius: 8,
-                barPercentage: 0.6
+                backgroundColor: gradient,
+                borderRadius: 6,
+                borderSkipped: false,
+                barPercentage: 0.55,
+                hoverBackgroundColor: '#1a3a6b'
             }]
         },
         options: {
             responsive: true,
-            plugins: { legend: { display: false }, tooltip: { backgroundColor: '#0b1e3a', titleColor: '#fff', bodyColor: '#ddd' } },
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: tooltipStyle
+            },
             scales: {
-                y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { color: '#6f85a5' } },
-                x: { grid: { display: false }, ticks: { color: '#6f85a5', maxRotation: 20, font: { size: 10 } } }
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(11, 30, 58, 0.06)', drawBorder: false },
+                    ticks: { color: '#6f85a5', font: { family: chartFont, size: 10 } }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#6f85a5', font: { family: chartFont, size: 10 }, maxRotation: 25 }
+                }
             }
         }
     });
@@ -50,15 +97,16 @@ function initCharts() {
 
 function showToast(message, type = "success") {
     const container = document.querySelector(".toast-container");
-    const colors = { success: "#10b981", error: "#ef4444", warning: "#f59e0b", info: "#3b82f6" };
+    const colors = { success: "#2a6cf5", error: "#dc2626", warning: "#ca8a04", info: "#1a3a6b" };
     const color = colors[type] || colors.info;
     const toast = document.createElement("div");
     toast.className = "toast";
+    toast.style.borderLeftColor = color;
     const iconMap = { success: "bi-check-circle-fill", error: "bi-x-circle-fill", warning: "bi-exclamation-triangle-fill", info: "bi-info-circle-fill" };
     toast.innerHTML = `
-        <i class="bi ${iconMap[type] || 'bi-info-circle-fill'}" style="color:${color}; font-size:24px;"></i>
-        <span style="flex:1; font-size:14px; color:#0b1e3a;">${message}</span>
-        <button class="btn-close" style="font-size:12px;" onclick="this.parentElement.remove()"></button>
+        <i class="bi ${iconMap[type] || 'bi-info-circle-fill'}" style="color:${color}; font-size:20px;"></i>
+        <span style="flex:1; font-size:13px; color:#0b1e3a; font-weight:600;">${message}</span>
+        <button class="btn-close" onclick="this.parentElement.remove()"><i class="bi bi-x"></i></button>
     `;
     container.appendChild(toast);
     setTimeout(() => { if (toast.parentElement) toast.remove(); }, 4000);
@@ -100,15 +148,27 @@ async function loadAdmins() {
     }
 }
 
+function escapeHtml(text) {
+    const d = document.createElement("div");
+    d.textContent = text;
+    return d.innerHTML;
+}
+
+function getInitials(name) {
+    const parts = String(name || '').trim().split(/\s+/);
+    if (!parts[0]) return '?';
+    return parts[0][0].toUpperCase();
+}
+
 function renderAdminList(admins) {
     const list = document.getElementById("admin-list");
     list.innerHTML = "";
 
     if (!admins || admins.length === 0) {
         list.innerHTML = `
-            <li style="text-align:center; color:#8a9bb5; padding:24px; background:transparent; border:none;">
-                <i class="bi bi-inbox" style="font-size:28px;display:block;margin-bottom:8px;"></i>
-                Нет администраторов
+            <li class="empty-state">
+                <i class="bi bi-inbox"></i>
+                <span>Нет администраторов</span>
             </li>
             <li class="add-admin-list-item">
                 <button class="btn-add-inline" id="open-add-modal-btn">
@@ -128,17 +188,17 @@ function renderAdminList(admins) {
 
         li.innerHTML = `
             <div class="admin-info">
-                <i class="bi bi-person-circle"></i>
-                <div>
+                <div class="admin-avatar level-${admin.level}">${getInitials(admin.full_name)}</div>
+                <div class="admin-meta">
                     <span class="admin-name">${escapeHtml(admin.full_name)}</span>
                     <span class="admin-username">
                         @${escapeHtml(admin.username)}
-                        <span class="level-text level-${admin.level}">Уровень ${admin.level}</span>
+                        <span class="level-text level-${admin.level}">L${admin.level}</span>
                     </span>
                 </div>
             </div>
             <div class="admin-actions">
-                <button class="edit-admin-btn ${canEdit ? '' : 'disabled'}" data-id="${admin.id}" data-fullname="${escapeHtml(admin.full_name)}" data-username="${escapeHtml(admin.username)}" data-level="${admin.level}" ${canEdit ? '' : 'disabled'} title="${isSelf ? 'Редактировать себя' : (canEdit ? 'Редактировать' : 'Недостаточно прав')}"><i class="bi bi-pencil"></i></button>
+                <button class="edit-admin-btn ${canEdit ? '' : 'disabled'}" data-id="${admin.id}" ${canEdit ? '' : 'disabled'} title="${isSelf ? 'Редактировать себя' : (canEdit ? 'Редактировать' : 'Недостаточно прав')}"><i class="bi bi-pencil"></i></button>
                 <button class="delete-admin-btn ${canDelete ? '' : 'disabled'}" data-id="${admin.id}" ${canDelete ? '' : 'disabled'} title="${isSelf ? 'Нельзя удалить себя' : (canDelete ? 'Удалить' : 'Недостаточно прав')}"><i class="bi bi-trash3"></i></button>
             </div>
         `;
@@ -158,12 +218,6 @@ function renderAdminList(admins) {
     `;
     list.appendChild(addLi);
     document.getElementById("open-add-modal-btn").addEventListener("click", openAddModal);
-}
-
-function escapeHtml(text) {
-    const d = document.createElement("div");
-    d.textContent = text;
-    return d.innerHTML;
 }
 
 function openAddModal() {
@@ -252,7 +306,7 @@ function openEditModal(id, fullname, username, level) {
         if (lvl === currentValue) opt.selected = true;
         select.appendChild(opt);
     });
-    hint.textContent = isSelf ? "Вы можете оставить текущий или понизить" : "Установите уровень ниже вашего";
+    hint.textContent = isSelf ? "Можно оставить текущий или понизить" : "Уровень должен быть ниже вашего";
     if (select.options.length === 0) {
         const opt = document.createElement("option");
         opt.value = "";
@@ -294,7 +348,7 @@ document.getElementById("edit-admin-form").addEventListener("submit", async (e) 
             closeEditModal();
             loadAdmins();
             if (username === currentUsername) {
-                document.querySelector('.level-badge').textContent = `Уровень ${level}`;
+                document.querySelector('.user-role').textContent = `Уровень ${level}`;
                 setTimeout(() => location.reload(), 800);
             }
         } else showToast(data.message || "Ошибка", "error");
