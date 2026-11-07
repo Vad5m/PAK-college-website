@@ -16,6 +16,7 @@
 
 > [!NOTE]
 > Notice: This repository is for viewing purposes only. You are not allowed to copy, distribute, modify, or use this code without explicit written permission from the author.
+> [!NOTE]
 > Уведомление: Этот репозиторий предназначен только для просмотра. Вам запрещено копировать, распространять, модифицировать или использовать этот код без прямого письменного разрешения автора.
 
 
