@@ -1,0 +1,6 @@
+Flask
+flask-minify
+python-dotenv
+Pillow
+psutil
+Werkzeug
