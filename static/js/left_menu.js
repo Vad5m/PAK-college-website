@@ -4,10 +4,14 @@ function hideModals() { document.querySelectorAll(".modal").forEach(function(m) 
 function escapeHtml(str) { if (!str) return ""; return str.replace(/[&<>]/g, function(m) { return { '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]; }); }
 
 var currentOpenPanel = null;
-var sortableInstance = null;
+var sortableTop = null;
+var sortableSubs = [];
 var editorChoiceMode = null;
 var editorChoiceOriginalName = null;
 var editorChoiceEditId = null;
+var editorChoiceEditParentId = null;
+var editorChoiceChildren = [];
+var expandedParents = {};
 
 function showMenuText(itemId, title) {
     var menuEl = document.querySelector('.side-menu[data-page-type]');
@@ -19,6 +23,60 @@ function getApi() {
     return window.LEFT_MENU_API || {};
 }
 
+function buildMenuTree(items) {
+    var byId = {};
+    var roots = [];
+    items.forEach(function(it) {
+        byId[it.id] = Object.assign({}, it, { children: [] });
+    });
+    items.forEach(function(it) {
+        var node = byId[it.id];
+        var pid = (it.parent_id !== undefined && it.parent_id !== null) ? it.parent_id : null;
+        if (pid && byId[pid]) {
+            byId[pid].children.push(node);
+        } else {
+            roots.push(node);
+        }
+    });
+    roots.forEach(function(r) {
+        r.children.sort(function(a, b) { return (a.sort_order || 0) - (b.sort_order || 0); });
+    });
+    return roots;
+}
+
+function renderLeafItem(item, isChild) {
+    var id = item.id;
+    var childClass = isChild ? ' sub-child' : '';
+    var pid = item.parent_id || '';
+    if (item.link && item.link.trim()) {
+        var href = item.link.trim();
+        return '<div class="menu-item' + childClass + '" data-id="' + id + '" data-has-link="true" data-parent-id="' + pid + '">' +
+               '<a href="' + escapeHtml(href) + '" class="menu-link" ' + (href.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : '') + '>' + escapeHtml(item.letter) + '</a>' +
+               (window.isAdmin ? '<div class="menu-actions"><button class="edit-menu-btn" data-id="' + id + '" title="Редактировать">✎</button><button class="delete-menu-btn" data-id="' + id + '" title="Удалить">✖</button></div>' : '') +
+               '</div>';
+    }
+    return '<div class="menu-item' + childClass + '" data-id="' + id + '" data-has-link="false" data-parent-id="' + pid + '">' +
+           '<span class="menu-link" style="cursor:pointer;">' + escapeHtml(item.letter) + '</span>' +
+           (window.isAdmin ? '<div class="menu-actions"><button class="edit-menu-btn" data-id="' + id + '" title="Редактировать">✎</button><button class="delete-menu-btn" data-id="' + id + '" title="Удалить">✖</button></div>' : '') +
+           '</div>';
+}
+
+function renderParentItem(item) {
+    var id = item.id;
+    var isExpanded = !!expandedParents[id];
+    var arrow = '<span class="menu-toggle-arrow" title="Развернуть/свернуть">▶</span>';
+    var childrenHtml = '<div class="menu-subitems' + (isExpanded ? ' open' : '') + '" data-parent-id="' + id + '">';
+    item.children.forEach(function(child) {
+        childrenHtml += renderLeafItem(child, true);
+    });
+    childrenHtml += '</div>';
+    return '<div class="menu-item parent-item' + (isExpanded ? ' expanded' : '') + '" data-id="' + id + '" data-has-children="true" data-has-link="false" data-parent-id="' + (item.parent_id || '') + '">' +
+           '<span class="menu-link parent-link" style="cursor:pointer;">' + escapeHtml(item.letter) + '</span>' +
+           (window.isAdmin ? '<div class="menu-actions"><button class="edit-menu-btn" data-id="' + id + '" title="Редактировать подменю">✎</button><button class="delete-menu-btn" data-id="' + id + '" title="Удалить">✖</button></div>' : '') +
+           arrow +
+           '</div>' + childrenHtml;
+}
+
 async function refreshLeftMenu() {
     var api = getApi();
     var res = await fetch(api.items);
@@ -26,61 +84,56 @@ async function refreshLeftMenu() {
     var items = await res.json();
     var container = document.getElementById('leftMenuContainer');
     if (!container) return;
+    destroySortables();
     if (items.length === 0) {
         container.innerHTML = '<div class="empty-menu">Пусто</div>';
-        if (sortableInstance) sortableInstance.destroy();
-        sortableInstance = null;
     } else {
+        var tree = buildMenuTree(items);
         var html = '';
-        for (var i = 0; i < items.length; i++) {
-            var item = items[i];
-            if (item.link && item.link.trim()) {
-                var href = item.link.trim();
-                html += '<div class="menu-item" data-id="' + item.id + '" data-has-link="true">' +
-                        '<a href="' + escapeHtml(href) + '" class="menu-link" ' + (href.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : '') + '>' + escapeHtml(item.letter) + '</a>' +
-                        (window.isAdmin ? '<div class="menu-actions"><button class="edit-menu-btn" data-id="' + item.id + '" title="Редактировать">✎</button><button class="delete-menu-btn" data-id="' + item.id + '" title="Удалить">✖</button></div>' : '') +
-                        '</div>';
+        tree.forEach(function(node) {
+            if (node.children && node.children.length > 0) {
+                html += renderParentItem(node);
             } else {
-                html += '<div class="menu-item" data-id="' + item.id + '" data-has-link="false">' +
-                        '<span class="menu-link" style="cursor:pointer;">' + escapeHtml(item.letter) + '</span>' +
-                        (window.isAdmin ? '<div class="menu-actions"><button class="edit-menu-btn" data-id="' + item.id + '" title="Редактировать">✎</button><button class="delete-menu-btn" data-id="' + item.id + '" title="Удалить">✖</button></div>' : '') +
-                        '</div>';
-            }
-        }
-        container.innerHTML = html;
-        document.querySelectorAll('#leftMenuContainer .menu-item').forEach(function(el) {
-            var hasLink = el.dataset.hasLink === 'true';
-            if (!hasLink) {
-                var span = el.querySelector('.menu-link');
-                var itemId = el.dataset.id;
-                var title = span ? span.textContent : '';
-                span.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    showMenuText(itemId, title);
-                });
+                html += renderLeafItem(node, false);
             }
         });
-        if (window.isAdmin) {
-            document.querySelectorAll('#leftMenuContainer .menu-item').forEach(function(el) {
-                el.classList.add('draggable');
-            });
-            if (sortableInstance) sortableInstance.destroy();
-            sortableInstance = new Sortable(container, {
-                animation: 200,
-                handle: '.menu-item',
-                onEnd: async function() {
-                    var ids = Array.from(document.querySelectorAll('#leftMenuContainer .menu-item')).map(function(el) { return parseInt(el.dataset.id); });
-                    if (ids.length) {
-                        await fetch(api.reorder, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ ids: ids })
-                        });
-                        syncMobilePanels();
-                    }
+        container.innerHTML = html;
+
+        container.querySelectorAll('.menu-item.parent-item').forEach(function(el) {
+            var arrow = el.querySelector('.menu-toggle-arrow');
+            var link = el.querySelector('.parent-link');
+            function toggle(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var id = el.dataset.id;
+                expandedParents[id] = !expandedParents[id];
+                el.classList.toggle('expanded');
+                var sub = container.querySelector('.menu-subitems[data-parent-id="' + id + '"]');
+                if (sub) sub.classList.toggle('open');
+            }
+            if (arrow) arrow.addEventListener('click', toggle);
+            if (link) link.addEventListener('click', toggle);
+        });
+
+        container.querySelectorAll('.menu-item').forEach(function(el) {
+            var hasLink = el.dataset.hasLink === 'true';
+            var isParent = el.dataset.hasChildren === 'true';
+            if (!hasLink && !isParent) {
+                var span = el.querySelector('.menu-link');
+                if (span) {
+                    var itemId = el.dataset.id;
+                    var title = span.textContent;
+                    span.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        showMenuText(itemId, title);
+                    });
                 }
-            });
-        } else if (sortableInstance) { sortableInstance.destroy(); sortableInstance = null; }
+            }
+        });
+
+        if (window.isAdmin) {
+            initSortables(container, api);
+        }
     }
     document.querySelectorAll('.delete-menu-btn').forEach(function(btn) {
         btn.removeEventListener('click', handleMenuDelete);
@@ -91,6 +144,75 @@ async function refreshLeftMenu() {
         btn.addEventListener('click', handleMenuEdit);
     });
     syncMobilePanels();
+}
+
+function destroySortables() {
+    if (sortableTop) { sortableTop.destroy(); sortableTop = null; }
+    sortableSubs.forEach(function(s) { try { s.destroy(); } catch(e) {} });
+    sortableSubs = [];
+}
+
+function initSortables(container, api) {
+    var group = { name: 'left-menu', pull: true, put: true };
+
+    function findParentIdOfList(listEl) {
+        if (listEl === container) return null;
+        var pid = listEl.dataset.parentId;
+        return pid ? parseInt(pid) : null;
+    }
+
+    function collectAll() {
+        var ids = [];
+        var parentIds = {};
+        container.querySelectorAll('.menu-item').forEach(function(el) {
+            var itemId = parseInt(el.dataset.id);
+            ids.push(itemId);
+            var sub = el.querySelector('.menu-actions');
+            parentIds[itemId] = el.dataset.parentId ? parseInt(el.dataset.parentId) : null;
+        });
+        return { ids: ids, parent_ids: parentIds };
+    }
+
+    async function handleDrop(evt) {
+        var fromList = evt.from;
+        var toList = evt.to;
+        var targetParentId = findParentIdOfList(toList);
+        var itemEl = evt.item;
+        if (targetParentId !== null) {
+            itemEl.dataset.parentId = targetParentId;
+            itemEl.classList.add('sub-child');
+        } else {
+            itemEl.dataset.parentId = '';
+            itemEl.classList.remove('sub-child');
+        }
+        var payload = collectAll();
+        try {
+            await fetch(api.reorder, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        } catch (e) {}
+        await refreshLeftMenu();
+        syncMobilePanels();
+    }
+
+    function commonOptions(listEl) {
+        return {
+            group: group,
+            animation: 200,
+            handle: '.menu-item',
+            draggable: '.menu-item',
+            emptyInsertThreshold: 20,
+            onEnd: handleDrop
+        };
+    }
+
+    sortableTop = new Sortable(container, commonOptions(container));
+
+    container.querySelectorAll('.menu-subitems').forEach(function(subList) {
+        sortableSubs.push(new Sortable(subList, commonOptions(subList)));
+    });
 }
 
 async function handleMenuDelete(e) {
@@ -107,9 +229,91 @@ async function handleMenuDelete(e) {
 async function handleMenuEdit(e) {
     e.stopPropagation();
     var id = e.currentTarget.dataset.id;
+    var itemEl = document.querySelector('#leftMenuContainer .menu-item[data-id="' + id + '"]');
+    var isParent = itemEl && itemEl.dataset.hasChildren === 'true';
+    if (isParent) {
+        openSubmenuEditModal(id);
+        return;
+    }
     var menuEl = document.querySelector('.side-menu[data-page-type]');
     var pageType = menuEl ? menuEl.dataset.pageType : 'home';
     window.open('/menu/edit/' + pageType + '/' + id, '_blank');
+}
+
+async function openSubmenuEditModal(parentId) {
+    var api = getApi();
+    var res = await fetch(api.items);
+    if (!res.ok) return;
+    var items = await res.json();
+    var parent = items.find(function(x) { return parseInt(x.id) === parseInt(parentId); });
+    if (!parent) return;
+    var children = items
+        .filter(function(x) { return x.parent_id !== null && x.parent_id !== undefined && parseInt(x.parent_id) === parseInt(parentId); })
+        .sort(function(a, b) { return (a.sort_order || 0) - (b.sort_order || 0); });
+
+    editorChoiceEditId = parseInt(parentId);
+    editorChoiceEditParentId = parent.parent_id || null;
+    editorChoiceChildren = children.slice();
+
+    var modal = document.getElementById('editorChoiceModal');
+    var nameInput = document.getElementById('editorChoiceName');
+    var submenuSection = document.getElementById('submenuSection');
+    var submenuContainer = document.getElementById('submenuInputsContainer');
+    var createBtn = document.getElementById('editorChoiceCreate');
+    var newBtn = document.getElementById('choiceNewEditor');
+    var submenuBtn = document.getElementById('choiceSubmenu');
+    var htmlSection = document.getElementById('editorChoiceHtmlSection');
+
+    if (nameInput) nameInput.value = parent.letter || '';
+    if (htmlSection) htmlSection.style.display = 'none';
+    editorChoiceMode = 'submenu';
+    if (newBtn) newBtn.classList.remove('active');
+    if (submenuBtn) submenuBtn.classList.add('active');
+    if (submenuSection) submenuSection.style.display = 'flex';
+    if (createBtn) { createBtn.textContent = 'Готово'; createBtn.disabled = false; }
+
+    if (submenuContainer) {
+        submenuContainer.innerHTML = '';
+        if (children.length === 0) {
+            submenuContainer.innerHTML =
+                '<div class="input-group submenu-input-group">' +
+                    '<input type="text" class="input submenu-input" placeholder=" " />' +
+                    '<label class="user-label">Подпункт 1</label>' +
+                '</div>';
+        } else {
+            children.forEach(function(child, idx) {
+                var g = document.createElement('div');
+                g.className = 'input-group submenu-input-group';
+                g.dataset.childId = child.id;
+                g.innerHTML =
+                    '<input type="text" class="input submenu-input" placeholder=" " value="' + escapeHtml(child.letter || '') + '" />' +
+                    '<label class="user-label">Подпункт ' + (idx + 1) + '</label>';
+                submenuContainer.appendChild(g);
+            });
+            var last = submenuContainer.lastElementChild;
+            if (last) {
+                var lastInp = last.querySelector('.submenu-input');
+                if (lastInp && lastInp.value.trim() !== '') {
+                    var g = document.createElement('div');
+                    g.className = 'input-group submenu-input-group';
+                    g.innerHTML =
+                        '<input type="text" class="input submenu-input" placeholder=" " />' +
+                        '<label class="user-label">Подпункт ' + (children.length + 1) + '</label>';
+                    submenuContainer.appendChild(g);
+                }
+            }
+        }
+        bindSubmenuInputs();
+    }
+
+    if (modal) {
+        modal.classList.add('show');
+        modal.style.display = 'block';
+    }
+    setTimeout(function() {
+        var first = submenuContainer ? submenuContainer.querySelector('.submenu-input') : null;
+        if (first) first.focus();
+    }, 100);
 }
 
 function syncMobilePanels() {
@@ -133,16 +337,34 @@ function syncMobilePanels() {
             btn.removeEventListener('click', handleMenuEdit);
             btn.addEventListener('click', handleMenuEdit);
         });
+        leftContainer.querySelectorAll('.menu-item.parent-item').forEach(function(el) {
+            var arrow = el.querySelector('.menu-toggle-arrow');
+            var link = el.querySelector('.parent-link');
+            function toggle(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var id = el.dataset.id;
+                expandedParents[id] = !expandedParents[id];
+                el.classList.toggle('expanded');
+                var sub = leftContainer.querySelector('.menu-subitems[data-parent-id="' + id + '"]');
+                if (sub) sub.classList.toggle('open');
+            }
+            if (arrow) arrow.addEventListener('click', toggle);
+            if (link) link.addEventListener('click', toggle);
+        });
         leftContainer.querySelectorAll('.menu-item').forEach(function(el) {
             var hasLink = el.dataset.hasLink === 'true';
-            if (!hasLink) {
+            var isParent = el.dataset.hasChildren === 'true';
+            if (!hasLink && !isParent) {
                 var span = el.querySelector('.menu-link');
-                var itemId = el.dataset.id;
-                var title = span ? span.textContent : '';
-                span.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    showMenuText(itemId, title);
-                });
+                if (span) {
+                    var itemId = el.dataset.id;
+                    var title = span.textContent;
+                    span.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        showMenuText(itemId, title);
+                    });
+                }
             }
         });
     }
@@ -193,22 +415,33 @@ function resetEditorChoice() {
     editorChoiceMode = null;
     editorChoiceOriginalName = null;
     editorChoiceEditId = null;
+    editorChoiceEditParentId = null;
+    editorChoiceChildren = [];
     var name = document.getElementById('editorChoiceName');
-    var link = document.getElementById('editorChoiceLink');
-    var html = document.getElementById('editorChoiceHtml');
     var preview = document.getElementById('editorChoicePreview');
     var htmlSection = document.getElementById('editorChoiceHtmlSection');
+    var submenuSection = document.getElementById('submenuSection');
     var createBtn = document.getElementById('editorChoiceCreate');
     var newBtn = document.getElementById('choiceNewEditor');
-    var htmlBtn = document.getElementById('choiceHtmlEditor');
+    var submenuBtn = document.getElementById('choiceSubmenu');
+
     if (name) name.value = '';
-    if (link) link.value = '';
-    if (html) html.value = '';
     if (preview) { preview.textContent = ''; preview.classList.remove('error'); }
     if (htmlSection) htmlSection.style.display = 'none';
-    if (createBtn) { createBtn.disabled = true; createBtn.textContent = 'Создать'; }
+    if (submenuSection) submenuSection.style.display = 'none';
+    if (createBtn) { createBtn.disabled = true; createBtn.textContent = 'Открыть редактор'; }
     if (newBtn) newBtn.classList.remove('active');
-    if (htmlBtn) htmlBtn.classList.remove('active');
+    if (submenuBtn) submenuBtn.classList.remove('active');
+
+    var submenuContainer = document.getElementById('submenuInputsContainer');
+    if (submenuContainer) {
+        submenuContainer.innerHTML =
+            '<div class="input-group submenu-input-group">' +
+                '<input type="text" class="input submenu-input" placeholder=" " />' +
+                '<label class="user-label">Подпункт 1</label>' +
+            '</div>';
+        bindSubmenuInputs();
+    }
 }
 
 function openEditorChoiceModal() {
@@ -230,6 +463,9 @@ function closeEditorChoiceModal() {
         modal.classList.remove('show');
         modal.style.display = 'none';
     }
+    editorChoiceEditId = null;
+    editorChoiceEditParentId = null;
+    editorChoiceChildren = [];
 }
 
 function updateEditorChoiceCreateButton() {
@@ -237,11 +473,75 @@ function updateEditorChoiceCreateButton() {
     var createBtn = document.getElementById('editorChoiceCreate');
     if (!name || !createBtn) return;
     var nameOk = name.value.trim().length > 0;
-    if (editorChoiceMode === 'html' || editorChoiceMode === 'new' || editorChoiceMode === 'edit') {
+    if (editorChoiceMode === 'new' || editorChoiceMode === 'submenu') {
         createBtn.disabled = !nameOk;
     } else {
         createBtn.disabled = true;
     }
+}
+
+function bindSubmenuInputs() {
+    var container = document.getElementById('submenuInputsContainer');
+    if (!container) return;
+    var inputs = container.querySelectorAll('.submenu-input');
+    inputs.forEach(function(input) {
+        input.removeEventListener('input', handleSubmenuInput);
+        input.addEventListener('input', handleSubmenuInput);
+    });
+    var groups = container.querySelectorAll('.submenu-input-group');
+    groups.forEach(function(group, idx) {
+        var label = group.querySelector('.user-label');
+        if (label) label.textContent = 'Подпункт ' + (idx + 1);
+    });
+}
+
+function handleSubmenuInput(e) {
+    var container = document.getElementById('submenuInputsContainer');
+    if (!container) return;
+
+    var groups = Array.from(container.querySelectorAll('.submenu-input-group'));
+
+    for (var i = groups.length - 2; i >= 0; i--) {
+        var inp = groups[i].querySelector('.submenu-input');
+        if (inp && inp.value.trim() === '') {
+            var nextInp = groups[i + 1] ? groups[i + 1].querySelector('.submenu-input') : null;
+            if (!nextInp || nextInp.value.trim() === '') {
+                groups[i].remove();
+            }
+        }
+    }
+
+    groups = Array.from(container.querySelectorAll('.submenu-input-group'));
+    var allFilled = groups.length > 0;
+    for (var j = 0; j < groups.length; j++) {
+        var gi = groups[j].querySelector('.submenu-input');
+        if (!gi || gi.value.trim() === '') { allFilled = false; break; }
+    }
+    var lastInput = groups.length > 0 ? groups[groups.length - 1].querySelector('.submenu-input') : null;
+    if (allFilled && lastInput && lastInput.value.trim() !== '') {
+        var newGroup = document.createElement('div');
+        newGroup.className = 'input-group submenu-input-group';
+        newGroup.innerHTML =
+            '<input type="text" class="input submenu-input" placeholder=" " />' +
+            '<label class="user-label">Подпункт ' + (groups.length + 1) + '</label>';
+        container.appendChild(newGroup);
+    }
+
+    bindSubmenuInputs();
+}
+
+function collectSubmenuEntries() {
+    var container = document.getElementById('submenuInputsContainer');
+    if (!container) return [];
+    var entries = [];
+    container.querySelectorAll('.submenu-input-group').forEach(function(group) {
+        var inp = group.querySelector('.submenu-input');
+        var v = inp ? inp.value.trim() : '';
+        if (!v) return;
+        var childId = group.dataset.childId;
+        entries.push({ value: v, childId: childId ? parseInt(childId) : null });
+    });
+    return entries;
 }
 
 function createMenuItemWithHtml(name, link, html, editId) {
@@ -275,6 +575,83 @@ function createMenuItemWithHtml(name, link, html, editId) {
             preview.classList.add('error');
         }
     });
+}
+
+async function createSubmenuItems(parentName, entries) {
+    var api = getApi();
+    try {
+        var parentId;
+        if (editorChoiceEditId) {
+            var upd = await fetch(api.update + editorChoiceEditId, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ letter: parentName, text: '', link: '' })
+            });
+            var updData = await upd.json();
+            if (updData && updData.success === false) {
+                throw new Error(updData.message || 'Не удалось обновить подменю');
+            }
+            parentId = editorChoiceEditId;
+        } else {
+            var parentRes = await fetch(api.add, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ letter: parentName, text: '', link: '', parent_id: editorChoiceEditParentId })
+            });
+            var parentData = await parentRes.json();
+            if (parentData && parentData.success === false) {
+                throw new Error(parentData.message || 'Не удалось создать подменю');
+            }
+            parentId = parentData.item ? parentData.item.id : null;
+        }
+        if (parentId) expandedParents[parentId] = true;
+
+        var existingIds = editorChoiceChildren.map(function(c) { return parseInt(c.id); });
+        var keptIds = [];
+
+        for (var i = 0; i < entries.length; i++) {
+            var entry = entries[i];
+            if (entry.childId && existingIds.indexOf(entry.childId) !== -1) {
+                await fetch(api.update + entry.childId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ letter: entry.value, text: '', link: '' })
+                });
+                keptIds.push(entry.childId);
+            } else {
+                var subRes = await fetch(api.add, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        letter: entry.value,
+                        text: '',
+                        link: '',
+                        parent_id: parentId
+                    })
+                });
+                var subData = await subRes.json();
+                if (subData && subData.success === false) {
+                    console.warn('Не удалось создать подпункт:', entry.value, subData.message);
+                } else if (subData && subData.item) {
+                    keptIds.push(parseInt(subData.item.id));
+                }
+            }
+        }
+
+        for (var k = 0; k < existingIds.length; k++) {
+            if (keptIds.indexOf(existingIds[k]) === -1) {
+                await fetch(api.delete + existingIds[k], { method: 'POST' });
+            }
+        }
+
+        refreshLeftMenu();
+    } catch (err) {
+        var preview = document.getElementById('editorChoicePreview');
+        if (preview) {
+            preview.textContent = 'Ошибка сохранения подменю: ' + (err && err.message ? err.message : 'попробуйте ещё раз');
+            preview.classList.add('error');
+        }
+    }
 }
 
 function closeNewEditorModal() {
@@ -347,35 +724,33 @@ function saveNewEditorContent() {
         alert('Редактор пуст. Добавьте содержимое.');
         return;
     }
-    var linkInput = document.getElementById('editorChoiceLink');
-    var link = linkInput ? linkInput.value.trim() : '';
     var editId = editorChoiceEditId;
-    createMenuItemWithHtml(name, link, content, editId);
+    createMenuItemWithHtml(name, '', content, editId);
     closeNewEditorModal();
 }
 
 function initEditorChoiceHandlers() {
     var nameInput = document.getElementById('editorChoiceName');
-    var linkInput = document.getElementById('editorChoiceLink');
-    var htmlInput = document.getElementById('editorChoiceHtml');
-    var preview = document.getElementById('editorChoicePreview');
-    var htmlSection = document.getElementById('editorChoiceHtmlSection');
     var createBtn = document.getElementById('editorChoiceCreate');
     var cancelBtn = document.getElementById('editorChoiceCancel');
     var choiceNew = document.getElementById('choiceNewEditor');
-    var choiceHtml = document.getElementById('choiceHtmlEditor');
+    var choiceSubmenu = document.getElementById('choiceSubmenu');
     var choiceModal = document.getElementById('editorChoiceModal');
     var newEditorCancelBtn = document.getElementById('newEditorCancel');
     var newEditorSaveBtn = document.getElementById('newEditorSave');
+    var submenuSection = document.getElementById('submenuSection');
 
     if (nameInput) nameInput.addEventListener('input', updateEditorChoiceCreateButton);
 
     if (choiceNew) {
         choiceNew.addEventListener('click', function() {
             editorChoiceMode = 'new';
-            if (choiceNew) choiceNew.classList.add('active');
-            if (choiceHtml) choiceHtml.classList.remove('active');
-            if (htmlSection) htmlSection.style.display = 'none';
+            editorChoiceEditId = null;
+            editorChoiceEditParentId = null;
+            editorChoiceChildren = [];
+            choiceNew.classList.add('active');
+            if (choiceSubmenu) choiceSubmenu.classList.remove('active');
+            if (submenuSection) submenuSection.style.display = 'none';
             if (createBtn) {
                 createBtn.textContent = 'Открыть редактор';
                 createBtn.disabled = !nameInput || nameInput.value.trim().length === 0;
@@ -383,47 +758,21 @@ function initEditorChoiceHandlers() {
         });
     }
 
-    if (choiceHtml) {
-        choiceHtml.addEventListener('click', function() {
-            editorChoiceMode = 'html';
-            if (choiceHtml) choiceHtml.classList.add('active');
+    if (choiceSubmenu) {
+        choiceSubmenu.addEventListener('click', function() {
+            editorChoiceMode = 'submenu';
+            choiceSubmenu.classList.add('active');
             if (choiceNew) choiceNew.classList.remove('active');
-            if (htmlSection) htmlSection.style.display = 'block';
+            if (submenuSection) submenuSection.style.display = 'flex';
             if (createBtn) {
-                createBtn.textContent = 'Создать';
+                createBtn.textContent = 'Готово';
                 createBtn.disabled = !nameInput || nameInput.value.trim().length === 0;
             }
-            setTimeout(function() { if (htmlInput) htmlInput.focus(); }, 100);
-        });
-    }
-
-    if (linkInput) {
-        linkInput.addEventListener('input', function() {
-            if (editorChoiceMode === 'html' && preview) {
-                var link = linkInput.value.trim();
-                if (link) {
-                    preview.textContent = 'При клике будет переход по ссылке: ' + link;
-                    preview.classList.remove('error');
-                } else {
-                    preview.textContent = '';
-                }
-            }
-        });
-    }
-
-    if (htmlInput) {
-        htmlInput.addEventListener('input', function() {
-            if (editorChoiceMode === 'html' && preview) {
-                var htmlVal = htmlInput.value.trim();
-                var linkVal = linkInput ? linkInput.value.trim() : '';
-                if (htmlVal && !linkVal) {
-                    preview.textContent = 'При клике будет показан HTML-текст (' + htmlVal.length + ' символов)';
-                    preview.classList.remove('error');
-                } else if (!htmlVal && !linkVal) {
-                    preview.textContent = 'Заполните ссылку или HTML-текст';
-                    preview.classList.add('error');
-                }
-            }
+            bindSubmenuInputs();
+            setTimeout(function() {
+                var firstInput = document.querySelector('#submenuInputsContainer .submenu-input');
+                if (firstInput) firstInput.focus();
+            }, 100);
         });
     }
 
@@ -446,19 +795,11 @@ function initEditorChoiceHandlers() {
                 var url = '/menu/new/' + pageType + '?title=' + encodeURIComponent(name);
                 window.open(url, '_blank');
                 closeEditorChoiceModal();
-            } else if (editorChoiceMode === 'html' || editorChoiceMode === 'edit') {
-                var link = linkInput ? linkInput.value.trim() : '';
-                var htmlVal = htmlInput ? htmlInput.value.trim() : '';
-                if (!link && !htmlVal) {
-                    if (preview) {
-                        preview.textContent = 'Заполните ссылку или HTML-текст';
-                        preview.classList.add('error');
-                    }
-                    return;
-                }
-                var editId = editorChoiceEditId;
-                createMenuItemWithHtml(name, link, htmlVal, editId);
-                closeEditorChoiceModal();
+            } else if (editorChoiceMode === 'submenu') {
+                var entries = collectSubmenuEntries();
+                createSubmenuItems(name, entries).then(function() {
+                    closeEditorChoiceModal();
+                });
             }
         });
     }
