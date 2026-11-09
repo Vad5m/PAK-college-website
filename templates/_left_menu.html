@@ -34,19 +34,22 @@
                     <span class="choice-desc">Расширенный редактор с медиа, таблицами и файлами</span>
                 </span>
             </button>
-            <button class="choice-btn" id="choiceHtmlEditor" type="button">
-                <span class="choice-icon">📄</span>
+            <button class="choice-btn submenu-toggle" id="choiceSubmenu" type="button">
+                <span class="choice-icon">☑</span>
                 <span class="choice-text">
-                    <span class="choice-title">HTML-редактирование</span>
-                    <span class="choice-desc">Простой HTML-код или ссылка</span>
+                    <span class="choice-title">Подменю</span>
+                    <span class="choice-desc">Добавить вложенные пункты для группировки</span>
                 </span>
             </button>
         </div>
 
-        <div class="editor-field">
-            <div class="input-group">
-                <input type="text" id="editorChoiceLink" class="input" placeholder=" " />
-                <label class="user-label">Ссылка (необязательно)</label>
+        <div id="submenuSection" style="display:none;">
+            <div class="submenu-hint">Введите названия подпунктов. Новое поле появится автоматически, когда заполните текущее.</div>
+            <div id="submenuInputsContainer">
+                <div class="input-group submenu-input-group">
+                    <input type="text" class="input submenu-input" placeholder=" " />
+                    <label class="user-label">Подпункт 1</label>
+                </div>
             </div>
         </div>
 
@@ -60,7 +63,7 @@
 
         <div class="editor-actions">
             <button class="btn-cancel" id="editorChoiceCancel">Отмена</button>
-            <button class="btn-create" id="editorChoiceCreate" disabled>Создать</button>
+            <button class="btn-create" id="editorChoiceCreate" disabled>Открыть редактор</button>
         </div>
     </div>
 </div>
