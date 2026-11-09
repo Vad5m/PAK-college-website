@@ -81,6 +81,7 @@
 .menu-actions {
     display: flex;
     gap: 4px;
+    align-items: center;
 }
 
 .edit-menu-btn {
@@ -112,6 +113,110 @@
 .delete-menu-btn:hover {
     background: #fee2e2;
     color: #991b1b;
+}
+
+.menu-toggle-arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #0b3b5f;
+    background: #e0edfa;
+    border-radius: 6px;
+    margin-left: 6px;
+    flex-shrink: 0;
+    transition: transform 0.2s ease, background 0.2s;
+    user-select: none;
+}
+
+.menu-item.parent-item {
+    background: #f8fafc;
+}
+
+.menu-item.parent-item:hover {
+    background: #eef4fb;
+}
+
+.menu-item.parent-item.expanded {
+    background: #e8f1fb;
+    border-bottom-color: #c7dcf0;
+}
+
+.menu-item.parent-item.expanded .menu-toggle-arrow {
+    transform: rotate(90deg);
+    background: #0b3b5f;
+    color: #ffffff;
+}
+
+.menu-item.parent-item .menu-link {
+    font-weight: 700;
+    color: #0b3b5f;
+}
+
+.menu-subitems {
+    background: #ffffff;
+    border-left: 3px solid #0b3b5f;
+    margin-left: 12px;
+    display: none;
+}
+
+.menu-subitems.open {
+    display: block;
+}
+
+.menu-subitems .menu-item {
+    padding-left: 20px;
+    border-bottom: 1px solid #edf2f7;
+    background: #ffffff;
+}
+
+.menu-subitems .menu-item:last-child {
+    border-bottom: none;
+}
+
+.menu-subitems .menu-item:hover {
+    background: #f0f7ff;
+}
+
+.menu-subitems .menu-link {
+    font-weight: 500;
+    font-size: 0.88rem;
+    color: #1e2f3e;
+}
+
+.menu-subitems .menu-item.sub-child.draggable {
+    cursor: grab;
+}
+
+.menu-item.drop-target {
+    background: #dbeafe !important;
+    outline: 2px dashed #3b82f6;
+    outline-offset: -2px;
+}
+
+.menu-subitems {
+    min-height: 8px;
+}
+
+.menu-subitems:empty::after {
+    content: "Перетащите сюда пункты, чтобы сделать подменю";
+    display: block;
+    padding: 10px 12px;
+    font-size: 11px;
+    color: #94a3b8;
+    font-style: italic;
+    text-align: center;
+}
+
+.sortable-ghost {
+    opacity: 0.4;
+}
+
+.sortable-chosen {
+    background: #eff6ff !important;
 }
 
 .empty-menu {
@@ -350,6 +455,20 @@ textarea.input {
 .editor-choice-modal .modal-content {
     max-width: 480px;
     padding: 28px;
+    display: flex;
+    flex-direction: column;
+    max-height: 85vh;
+    box-sizing: border-box;
+}
+
+.editor-choice-modal .modal-content h3 {
+    flex-shrink: 0;
+    margin-bottom: 28px;
+}
+
+.editor-choice-modal .modal-content > .input-group:first-of-type {
+    margin-top: 8px;
+    margin-bottom: 32px;
 }
 
 .editor-choice-modal .choice-buttons {
@@ -357,6 +476,7 @@ textarea.input {
     flex-direction: column;
     gap: 10px;
     margin-bottom: 4px;
+    flex-shrink: 0;
 }
 
 .editor-choice-modal .choice-btn {
@@ -364,8 +484,8 @@ textarea.input {
     padding: 14px 18px;
     border-radius: 12px;
     border: 2px solid #e2e8f0;
-    background: #f8fafc;
-    color: #0f172a;
+    background: #0b3b5f;
+    color: #ffffff;
     font-size: 15px;
     font-weight: 600;
     cursor: pointer;
@@ -380,20 +500,21 @@ textarea.input {
 
 .editor-choice-modal .choice-btn:hover {
     border-color: #3b82f6;
-    background: #eff6ff;
+    background: #1e6a8f;
     transform: translateY(-1px);
 }
 
 .editor-choice-modal .choice-btn.active {
     border-color: #3b82f6;
-    background: #eff6ff;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    background: #1e6a8f;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
 }
 
 .editor-choice-modal .choice-btn .choice-icon {
     font-size: 28px;
     line-height: 1;
     flex-shrink: 0;
+    color: #ffffff;
 }
 
 .editor-choice-modal .choice-btn .choice-text {
@@ -406,13 +527,13 @@ textarea.input {
 .editor-choice-modal .choice-btn .choice-title {
     font-size: 15px;
     font-weight: 600;
-    color: #0f172a;
+    color: #ffffff;
 }
 
 .editor-choice-modal .choice-btn .choice-desc {
     font-size: 12px;
     font-weight: 400;
-    color: #64748b;
+    color: #e2e8f0;
     line-height: 1.35;
 }
 
@@ -421,6 +542,7 @@ textarea.input {
     gap: 10px;
     justify-content: flex-end;
     margin-top: 20px;
+    flex-shrink: 0;
 }
 
 .editor-choice-modal .editor-actions button {
@@ -549,6 +671,66 @@ textarea.input {
     height: 100%;
     border: none;
     display: block;
+}
+
+.submenu-hint {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 20px;
+    line-height: 1.4;
+    flex-shrink: 0;
+}
+
+#submenuSection {
+    margin-top: 4px;
+    padding-top: 8px;
+    border-top: 1px dashed #e2e8f0;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#submenuInputsContainer {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 6px;
+    padding-top: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+#submenuInputsContainer::-webkit-scrollbar {
+    width: 8px;
+}
+
+#submenuInputsContainer::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#submenuInputsContainer::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+#submenuInputsContainer::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+.submenu-input-group {
+    margin-bottom: 16px;
+}
+
+.submenu-input-group:last-child {
+    margin-bottom: 4px;
+}
+
+.choice-btn.submenu-toggle .choice-icon {
+    font-size: 26px;
+    color: #ffffff;
 }
 
 @media (max-width: 767px) {
