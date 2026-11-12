@@ -3466,6 +3466,7 @@ border: none;
     const params = new URLSearchParams(window.location.search);
     const isAdmin = params.has('admin');
     const requestedId = params.get('id') || params.get('doc_id') || params.get('document_id');
+    const requestedPageType = params.get('page_type') || 'home';
 
     if (requestedId) {
         documentId = requestedId;
@@ -3479,15 +3480,35 @@ border: none;
     apiOptions.uploadUrl = apiOptions.uploadUrl || '/upload';
     apiOptions.onSave = function(state) {};
 
+    // Инициализация контента
     if (apiOptions.initialContent) {
         editor.innerHTML = apiOptions.initialContent;
         initializeAllVideos();
+        pushHistoryState();
+        updateHistoryButtons();
+        setEditingEnabled(isAdmin || apiOptions.editable === true);
+    } else if (requestedId) {
+        fetch('/api/' + encodeURIComponent(requestedPageType) + '_menu_text/' + encodeURIComponent(requestedId))
+            .then(function(r) { return r.ok ? r.json() : null; })
+            .then(function(data) {
+                if (data && data.success && typeof data.text === 'string') {
+                    editor.innerHTML = data.text;
+                    initializeAllVideos();
+                }
+                pushHistoryState();
+                updateHistoryButtons();
+                setEditingEnabled(isAdmin || apiOptions.editable === true);
+            })
+            .catch(function() {
+                pushHistoryState();
+                updateHistoryButtons();
+                setEditingEnabled(isAdmin || apiOptions.editable === true);
+            });
+    } else {
+        pushHistoryState();
+        updateHistoryButtons();
+        setEditingEnabled(isAdmin || apiOptions.editable === true);
     }
-
-    pushHistoryState();
-    updateHistoryButtons();
-
-    setEditingEnabled(isAdmin || apiOptions.editable === true);
 })();
 </script>
 </body>
