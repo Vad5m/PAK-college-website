@@ -16,7 +16,11 @@ var expandedParents = {};
 function showMenuText(itemId, title) {
     var menuEl = document.querySelector('.side-menu[data-page-type]');
     var pageType = menuEl ? menuEl.dataset.pageType : 'home';
-    window.open('/menu/view/' + pageType + '/' + itemId, '_blank');
+    window.open(
+        '/text_redactor?id=' + encodeURIComponent(itemId) +
+        '&page_type=' + encodeURIComponent(pageType),
+        '_blank'
+    );
 }
 
 function getApi() {
@@ -167,14 +171,12 @@ function initSortables(container, api) {
         container.querySelectorAll('.menu-item').forEach(function(el) {
             var itemId = parseInt(el.dataset.id);
             ids.push(itemId);
-            var sub = el.querySelector('.menu-actions');
             parentIds[itemId] = el.dataset.parentId ? parseInt(el.dataset.parentId) : null;
         });
         return { ids: ids, parent_ids: parentIds };
     }
 
     async function handleDrop(evt) {
-        var fromList = evt.from;
         var toList = evt.to;
         var targetParentId = findParentIdOfList(toList);
         var itemEl = evt.item;
